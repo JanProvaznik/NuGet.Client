@@ -128,11 +128,12 @@ else
 {
     Write-Host "##vso[task.setvariable variable=VsixPublishDir;]VS15"
     $newBuildCounter = $BuildNumber
-    $VsTargetBranch = ((& dotnet msbuild $RepositoryPath\build\config.props /restore:false "/ConsoleLoggerParameters:Verbosity=Minimal;NoSummary;ForceNoAlign" /nologo /target:GetVsTargetBranch) | Out-String).Trim()
-    $NuGetSdkVsVersion = ((& dotnet msbuild $RepositoryPath\build\config.props /restore:false "/ConsoleLoggerParameters:Verbosity=Minimal;NoSummary;ForceNoAlign" /nologo /target:GetNuGetSdkVsSemanticVersion) | Out-String).Trim()
-    $VsTargetChannel = ((& dotnet msbuild $RepositoryPath\build\config.props /restore:false "/ConsoleLoggerParameters:Verbosity=Minimal;NoSummary;ForceNoAlign" /nologo /target:GetVsTargetChannel) | Out-String).Trim()
-    $VsTargetMajorVersion = ((& dotnet msbuild $RepositoryPath\build\config.props /restore:false "/ConsoleLoggerParameters:Verbosity=Minimal;NoSummary;ForceNoAlign" /nologo /target:GetVsTargetMajorVersion) | Out-String).Trim()
-    $GetNuGetVsVersion = ((& dotnet msbuild $RepositoryPath\build\config.props /restore:false "/ConsoleLoggerParameters:Verbosity=Minimal;NoSummary;ForceNoAlign" /nologo /target:GetNuGetVsVersion) | Out-String).Trim()
+    $VsTargetBranch = ((& dotnet msbuild $RepositoryPath\build\config.props /restore:false /nologo -getProperty:VsTargetBranch) | Out-String).Trim()
+    $NuGetSdkVsVersion = ((& dotnet msbuild $RepositoryPath\build\config.props /restore:false /nologo -getProperty:NuGetSdkVsSemanticVersion) | Out-String).Trim()
+    $VsTargetChannel = ((& dotnet msbuild $RepositoryPath\build\config.props /restore:false /nologo -getProperty:VsTargetChannel) | Out-String).Trim()
+    $VsTargetMajorVersion = ((& dotnet msbuild $RepositoryPath\build\config.props /restore:false /nologo -getProperty:VsTargetMajorVersion) | Out-String).Trim()
+    $GetNuGetVsVersion = ((& dotnet msbuild $RepositoryPath\build\config.props /restore:false /nologo -getProperty:NuGetVsVersion) | Out-String).Trim()
+    $DotnetChannel = ((& dotnet msbuild $RepositoryPath\build\config.props /restore:false /nologo -getProperty:DotnetChannel) | Out-String).Trim()
 
     Write-Host "VS target branch: $VsTargetBranch"
     $jsonRepresentation = @{
@@ -144,6 +145,7 @@ else
         VsTargetMajorVersion = $VsTargetMajorVersion
         NuGetSdkVsVersion = $NuGetSdkVsVersion
         NuGetVsVersion = $GetNuGetVsVersion
+        DotnetChannel = $DotnetChannel
     }
 
     if (-not [string]::IsNullOrWhiteSpace($BuildInfoDirectory))

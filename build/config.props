@@ -24,6 +24,9 @@
 
     <IsEscrowMode Condition="'$(IsEscrowMode)' == ''">false</IsEscrowMode>
 
+    <!-- .NET Insertion Logic -->
+    <DotnetChannel>.NET 10.0.3xx SDK</DotnetChannel>
+
     <!-- Visual Studio Insertion Logic -->
     <VsTargetMajorVersion Condition="'$(VsTargetMajorVersion)' == ''">$([MSBuild]::Add(11, $(MajorNuGetVersion)))</VsTargetMajorVersion>
     <VsTargetBranch Condition="'$(VsTargetBranch)' == '' And '$(IsEscrowMode)' != 'true'">main</VsTargetBranch>
@@ -95,25 +98,4 @@
     <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
 
-  <Target Name="GetSemanticVersion">
-    <Message Text="$(SemanticVersion)" Importance="High"/>
-  </Target>
-  <Target Name="GetNuGetSdkVsSemanticVersion">
-    <Message Text="$(NuGetSdkVsSemanticVersion)" Importance="High"/>
-  </Target>
-  <Target Name="GetVsTargetMajorVersion">
-    <Message Text="$(VsTargetMajorVersion)" Importance="High"/>
-  </Target>
-  <Target Name="GetNuGetVsVersion">
-    <Message Text="$(NuGetVsVersion)" Importance="High"/>
-  </Target>
-  <Target Name="GetVsTargetBranch">
-    <Message Text="$(VsTargetBranch)" Importance="High"/>
-  </Target>
-  <Target Name="GetVsTargetChannel">
-    <Message Text="$(VsTargetChannel)" Importance="High"/>
-  </Target>
-  <Target Name="GetVsTargetChannelForTests">
-    <Message Text="$(VsTargetChannelForTests)" Importance="High"/>
-  </Target>
 </Project>
