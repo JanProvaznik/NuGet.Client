@@ -85,5 +85,11 @@ namespace NuGet.Frameworks
         /// Ex: .NETPlatform,Version=v0.0 &#8210;&gt; .NETPlatform,Version=v5.0
         /// </summary>
         IEnumerable<KeyValuePair<NuGetFramework, NuGetFramework>> FullNameReplacements { get; }
+
+        /// <summary>
+        /// Platform-level compatibility mappings for Net5Era+ TFMs.
+        /// These define one-way compatibility between platforms (e.g., winrt supports windows).
+        /// </summary>
+        IEnumerable<OneWayPlatformMappingEntry> PlatformCompatibilityMappings { get; }
     }
 }

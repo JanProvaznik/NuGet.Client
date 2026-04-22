@@ -1115,5 +1115,6 @@ namespace NuGet.Frameworks.Test
 
             Assert.Null(result);
         }
+
     }
 }

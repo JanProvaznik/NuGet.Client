@@ -153,5 +153,11 @@ namespace NuGet.Frameworks
         /// Returns a list of frameworks that could be compatible with .NETStandard.
         /// </summary>
         IEnumerable<NuGetFramework> GetCompatibleCandidates();
+
+        /// <summary>
+        /// Returns platform compatibility mappings where the given framework's platform
+        /// is the target platform and the framework version meets the minimum requirement.
+        /// </summary>
+        bool TryGetPlatformCompatibilityMappings(NuGetFramework framework, [NotNullWhen(true)] out IEnumerable<OneWayPlatformMappingEntry>? mappings);
     }
 }

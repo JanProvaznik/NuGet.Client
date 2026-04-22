@@ -1,1 +1,16 @@
 #nullable enable
+NuGet.Frameworks.OneWayPlatformMappingEntry
+NuGet.Frameworks.OneWayPlatformMappingEntry.OneWayPlatformMappingEntry() -> void
+NuGet.Frameworks.OneWayPlatformMappingEntry.TargetPlatform.get -> string!
+NuGet.Frameworks.OneWayPlatformMappingEntry.TargetPlatform.init -> void
+NuGet.Frameworks.OneWayPlatformMappingEntry.MinTargetFrameworkVersion.get -> System.Version?
+NuGet.Frameworks.OneWayPlatformMappingEntry.MinTargetFrameworkVersion.init -> void
+NuGet.Frameworks.OneWayPlatformMappingEntry.SupportedPlatform.get -> string!
+NuGet.Frameworks.OneWayPlatformMappingEntry.SupportedPlatform.init -> void
+NuGet.Frameworks.OneWayPlatformMappingEntry.MaxSupportedPlatformVersion.get -> System.Version?
+NuGet.Frameworks.OneWayPlatformMappingEntry.MaxSupportedPlatformVersion.init -> void
+override NuGet.Frameworks.OneWayPlatformMappingEntry.ToString() -> string!
+NuGet.Frameworks.IFrameworkMappings.PlatformCompatibilityMappings.get -> System.Collections.Generic.IEnumerable<NuGet.Frameworks.OneWayPlatformMappingEntry!>!
+NuGet.Frameworks.DefaultFrameworkMappings.PlatformCompatibilityMappings.get -> System.Collections.Generic.IEnumerable<NuGet.Frameworks.OneWayPlatformMappingEntry!>!
+NuGet.Frameworks.IFrameworkNameProvider.TryGetPlatformCompatibilityMappings(NuGet.Frameworks.NuGetFramework! framework, out System.Collections.Generic.IEnumerable<NuGet.Frameworks.OneWayPlatformMappingEntry!>? mappings) -> bool
+NuGet.Frameworks.FrameworkNameProvider.TryGetPlatformCompatibilityMappings(NuGet.Frameworks.NuGetFramework! framework, out System.Collections.Generic.IEnumerable<NuGet.Frameworks.OneWayPlatformMappingEntry!>? mappings) -> bool

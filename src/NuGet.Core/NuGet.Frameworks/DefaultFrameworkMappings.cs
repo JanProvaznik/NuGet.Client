@@ -648,6 +648,29 @@ namespace NuGet.Frameworks
             }
         }
 
+        private static readonly Lazy<OneWayPlatformMappingEntry[]> PlatformCompatibilityMappingsLazy = new Lazy<OneWayPlatformMappingEntry[]>(() =>
+        {
+            return new[]
+            {
+                // net10.0-winrt* projects support net*-windows packages when windows platform version <= 7.0
+                new OneWayPlatformMappingEntry
+                {
+                    TargetPlatform = "winrt",
+                    MinTargetFrameworkVersion = FrameworkConstants.Version10,
+                    SupportedPlatform = "windows",
+                    MaxSupportedPlatformVersion = FrameworkConstants.Version7,
+                },
+            };
+        });
+
+        public IEnumerable<OneWayPlatformMappingEntry> PlatformCompatibilityMappings
+        {
+            get
+            {
+                return PlatformCompatibilityMappingsLazy.Value;
+            }
+        }
+
         private static readonly Lazy<IFrameworkMappings> InstanceLazy = new Lazy<IFrameworkMappings>(() => new DefaultFrameworkMappings());
 
         /// <summary>

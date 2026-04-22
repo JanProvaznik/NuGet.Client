@@ -100,6 +100,28 @@ namespace NuGet.Frameworks.Test
         [InlineData("net5.0-tvos", "net5.0-watchos", false)]
         [InlineData("net5.0-watchos", "net5.0-windows", false)]
 
+        // net10.0-winrt* is compatible with net*-windows when windows platform version <= 7.0
+        [InlineData("net10.0-winrt10.0.1234.0", "net10.0-windows7.0", true)]
+        [InlineData("net10.0-winrt10.0.1234.0", "net9.0-windows7.0", true)]
+        [InlineData("net10.0-winrt10.0.1234.0", "net10.0-windows", true)]
+        [InlineData("net10.0-winrt", "net10.0-windows7.0", true)]
+        [InlineData("net11.0-winrt10.0", "net10.0-windows7.0", true)]
+        [InlineData("net10.0-winrt10.0.1234.0", "net10.0", true)]
+
+        // net10.0-winrt* is NOT compatible with net*-windows when windows platform version > 7.0
+        [InlineData("net10.0-winrt10.0.1234.0", "net10.0-windows10.0.1234.0", false)]
+        [InlineData("net10.0-winrt10.0.1234.0", "net9.0-windows10.0.1234.0", false)]
+        [InlineData("net10.0-winrt10.0.1234.0", "net10.0-windows8.0", false)]
+
+        // net10.0-winrt* is NOT compatible with higher .NET version windows packages
+        [InlineData("net10.0-winrt10.0.1234.0", "net11.0-windows7.0", false)]
+
+        // winrt compatibility does NOT apply below net10.0
+        [InlineData("net9.0-winrt10.0", "net9.0-windows7.0", false)]
+
+        // reverse direction: net*-windows target is NOT compatible with net*-winrt candidate
+        [InlineData("net10.0-windows7.0", "net10.0-winrt10.0.1234.0", false)]
+
         // Unknown net5.0 platform names will be treated as valid so long as their version is valid
         [InlineData("net5.0-madeupname", "net5.0", true)]
         [InlineData("net5.0-madeupname12.0", "net5.0", true)]

@@ -176,7 +176,7 @@ namespace NuGet.Frameworks
             return false;
         }
 
-        private static bool IsCompatibleWithTargetCore(NuGetFramework target, NuGetFramework candidate)
+        private bool IsCompatibleWithTargetCore(NuGetFramework target, NuGetFramework candidate)
         {
             bool result = true;
             bool isNet6Era = target.IsNet5Era && target.Version.Major >= 6;
@@ -203,14 +203,44 @@ namespace NuGet.Frameworks
 
                 if (target.IsNet5Era && candidate.HasPlatform)
                 {
-                    result = result
-                        && StringComparer.OrdinalIgnoreCase.Equals(target.Platform, candidate.Platform)
-                        && IsVersionCompatible(target.PlatformVersion, candidate.PlatformVersion);
+                    if (StringComparer.OrdinalIgnoreCase.Equals(target.Platform, candidate.Platform))
+                    {
+                        result = result && IsVersionCompatible(target.PlatformVersion, candidate.PlatformVersion);
+                    }
+                    else if (result && IsPlatformCompatible(target, candidate))
+                    {
+                        // Platform compatibility satisfied via mapping table
+                    }
+                    else
+                    {
+                        result = false;
+                    }
                 }
             }
 
 
             return result;
+        }
+
+        /// <summary>
+        /// Checks whether the target framework's platform is compatible with the candidate's platform
+        /// via the platform compatibility mappings table.
+        /// </summary>
+        private bool IsPlatformCompatible(NuGetFramework target, NuGetFramework candidate)
+        {
+            if (_mappings.TryGetPlatformCompatibilityMappings(target, out IEnumerable<OneWayPlatformMappingEntry>? mappings))
+            {
+                foreach (var mapping in mappings)
+                {
+                    if (StringComparer.OrdinalIgnoreCase.Equals(candidate.Platform, mapping.SupportedPlatform)
+                        && (mapping.MaxSupportedPlatformVersion is null || candidate.PlatformVersion <= mapping.MaxSupportedPlatformVersion))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         private static bool IsVersionCompatible(Version target, Version candidate)

@@ -64,6 +64,9 @@ namespace NuGet.Frameworks
         // non-PCL compatibility mappings
         private readonly Dictionary<string, HashSet<OneWayCompatibilityMappingEntry>> _compatibilityMappings;
 
+        // platform-level compatibility mappings for Net5Era+ TFMs
+        private readonly List<OneWayPlatformMappingEntry> _platformCompatibilityMappings;
+
         // subsets, net -> netcore
         private readonly Dictionary<string, HashSet<string>> _subSetFrameworks;
 
@@ -100,6 +103,7 @@ namespace NuGet.Frameworks
             _packageBasedFrameworkPrecedence = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
             _equivalentFrameworkPrecedence = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
             _compatibilityMappings = new Dictionary<string, HashSet<OneWayCompatibilityMappingEntry>>(StringComparer.OrdinalIgnoreCase);
+            _platformCompatibilityMappings = new List<OneWayPlatformMappingEntry>();
             _portableCompatibilityMappings = new Dictionary<int, HashSet<FrameworkRange>>();
             _shortNameRewrites = new Dictionary<NuGetFramework, NuGetFramework>();
             _fullNameRewrites = new Dictionary<NuGetFramework, NuGetFramework>();
@@ -669,6 +673,9 @@ namespace NuGet.Frameworks
                     // add rewrite rules
                     AddShortNameRewriteMappings(mapping.ShortNameReplacements);
                     AddFullNameRewriteMappings(mapping.FullNameReplacements);
+
+                    // add platform compatibility mappings
+                    AddPlatformCompatibilityMappings(mapping.PlatformCompatibilityMappings);
                 }
             }
         }
@@ -742,6 +749,14 @@ namespace NuGet.Frameworks
 
                     entries.Add(mapping);
                 }
+            }
+        }
+
+        private void AddPlatformCompatibilityMappings(IEnumerable<OneWayPlatformMappingEntry> mappings)
+        {
+            if (mappings != null)
+            {
+                _platformCompatibilityMappings.AddRange(mappings);
             }
         }
 
@@ -985,6 +1000,25 @@ namespace NuGet.Frameworks
             }
 
             supportedFrameworkRanges = null;
+            return false;
+        }
+
+        public bool TryGetPlatformCompatibilityMappings(NuGetFramework framework, [NotNullWhen(true)] out IEnumerable<OneWayPlatformMappingEntry>? mappings)
+        {
+            if (framework.IsNet5Era && framework.HasPlatform)
+            {
+                var matched = _platformCompatibilityMappings
+                    .Where(m => (m.MinTargetFrameworkVersion is null || framework.Version >= m.MinTargetFrameworkVersion)
+                        && StringComparer.OrdinalIgnoreCase.Equals(framework.Platform, m.TargetPlatform));
+
+                if (matched.Any())
+                {
+                    mappings = matched;
+                    return true;
+                }
+            }
+
+            mappings = null;
             return false;
         }
 
