@@ -1304,7 +1304,7 @@ NuGet.Protocol.Plugins.RequestHandlers.RequestHandlers() -> void
 ~NuGet.Protocol.Plugins.RequestHandlers.TryGet(NuGet.Protocol.Plugins.MessageMethod method, out NuGet.Protocol.Plugins.IRequestHandler handler) -> bool
 NuGet.Protocol.Plugins.RequestHandlers.TryRemove(NuGet.Protocol.Plugins.MessageMethod method) -> bool
 NuGet.Protocol.Plugins.RequestIdGenerator
-~NuGet.Protocol.Plugins.RequestIdGenerator.GenerateUniqueId() -> string
+NuGet.Protocol.Plugins.RequestIdGenerator.GenerateUniqueId() -> string!
 NuGet.Protocol.Plugins.RequestIdGenerator.RequestIdGenerator() -> void
 NuGet.Protocol.Plugins.Sender
 NuGet.Protocol.Plugins.Sender.Close() -> void
@@ -2004,11 +2004,11 @@ static NuGet.Protocol.NullThrottle.Instance.get -> NuGet.Protocol.NullThrottle!
 ~static NuGet.Protocol.PackageDetailsUriResourceV3.CreateOrNull(string uriTemplate) -> NuGet.Protocol.PackageDetailsUriResourceV3
 ~static NuGet.Protocol.Plugins.AutomaticProgressReporter.Create(NuGet.Protocol.Plugins.IConnection connection, NuGet.Protocol.Plugins.Message request, System.TimeSpan interval, System.Threading.CancellationToken cancellationToken) -> NuGet.Protocol.Plugins.AutomaticProgressReporter
 static NuGet.Protocol.Plugins.ConnectionOptions.CreateDefault(NuGet.Common.IEnvironmentVariableReader? reader = null) -> NuGet.Protocol.Plugins.ConnectionOptions!
-~static NuGet.Protocol.Plugins.JsonSerializationUtilities.Deserialize<T>(string json) -> T
-~static NuGet.Protocol.Plugins.JsonSerializationUtilities.FromObject(object value) -> Newtonsoft.Json.Linq.JObject
-~static NuGet.Protocol.Plugins.JsonSerializationUtilities.Serialize(Newtonsoft.Json.JsonWriter writer, object value) -> void
-~static NuGet.Protocol.Plugins.JsonSerializationUtilities.Serializer.get -> Newtonsoft.Json.JsonSerializer
-~static NuGet.Protocol.Plugins.JsonSerializationUtilities.ToObject<T>(Newtonsoft.Json.Linq.JObject jObject) -> T
+static NuGet.Protocol.Plugins.JsonSerializationUtilities.Deserialize<T>(string! json) -> T?
+static NuGet.Protocol.Plugins.JsonSerializationUtilities.FromObject(object! value) -> Newtonsoft.Json.Linq.JObject!
+static NuGet.Protocol.Plugins.JsonSerializationUtilities.Serialize(Newtonsoft.Json.JsonWriter! writer, object! value) -> void
+static NuGet.Protocol.Plugins.JsonSerializationUtilities.Serializer.get -> Newtonsoft.Json.JsonSerializer!
+static NuGet.Protocol.Plugins.JsonSerializationUtilities.ToObject<T>(Newtonsoft.Json.Linq.JObject! jObject) -> T?
 ~static NuGet.Protocol.Plugins.LogRequestHandler.GetLogLevel(NuGet.Common.ILogger logger) -> NuGet.Common.LogLevel
 static NuGet.Protocol.Plugins.MessageUtilities.Create(string! requestId, NuGet.Protocol.Plugins.MessageType type, NuGet.Protocol.Plugins.MessageMethod method) -> NuGet.Protocol.Plugins.Message!
 static NuGet.Protocol.Plugins.MessageUtilities.Create<TPayload>(string! requestId, NuGet.Protocol.Plugins.MessageType type, NuGet.Protocol.Plugins.MessageMethod method, TPayload! payload) -> NuGet.Protocol.Plugins.Message!
