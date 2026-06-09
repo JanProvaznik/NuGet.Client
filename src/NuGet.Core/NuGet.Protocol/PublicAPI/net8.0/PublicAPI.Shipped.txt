@@ -1041,8 +1041,8 @@ NuGet.Protocol.Plugins.IPluginProcess.LineRead -> System.EventHandler<NuGet.Prot
 NuGet.Protocol.Plugins.IReceiver
 NuGet.Protocol.Plugins.IReceiver.Close() -> void
 NuGet.Protocol.Plugins.IReceiver.Connect() -> void
-NuGet.Protocol.Plugins.IReceiver.Faulted -> System.EventHandler<NuGet.Protocol.Plugins.ProtocolErrorEventArgs!>!
-NuGet.Protocol.Plugins.IReceiver.MessageReceived -> System.EventHandler<NuGet.Protocol.Plugins.MessageEventArgs!>!
+NuGet.Protocol.Plugins.IReceiver.Faulted -> System.EventHandler<NuGet.Protocol.Plugins.ProtocolErrorEventArgs!>?
+NuGet.Protocol.Plugins.IReceiver.MessageReceived -> System.EventHandler<NuGet.Protocol.Plugins.MessageEventArgs!>?
 NuGet.Protocol.Plugins.IRequestHandler
 NuGet.Protocol.Plugins.IRequestHandler.CancellationToken.get -> System.Threading.CancellationToken
 NuGet.Protocol.Plugins.IRequestHandler.HandleResponseAsync(NuGet.Protocol.Plugins.IConnection! connection, NuGet.Protocol.Plugins.Message! request, NuGet.Protocol.Plugins.IResponseHandler! responseHandler, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
@@ -1287,13 +1287,13 @@ NuGet.Protocol.Plugins.ProtocolException.ProtocolException(string? message) -> v
 NuGet.Protocol.Plugins.ProtocolException.ProtocolException(string? message, System.Exception? innerException) -> void
 NuGet.Protocol.Plugins.Receiver
 NuGet.Protocol.Plugins.Receiver.Dispose() -> void
-NuGet.Protocol.Plugins.Receiver.Faulted -> System.EventHandler<NuGet.Protocol.Plugins.ProtocolErrorEventArgs>
-~NuGet.Protocol.Plugins.Receiver.FireFaultEvent(System.Exception exception, NuGet.Protocol.Plugins.Message message) -> void
-~NuGet.Protocol.Plugins.Receiver.FireMessageReceivedEvent(NuGet.Protocol.Plugins.Message message) -> void
+NuGet.Protocol.Plugins.Receiver.Faulted -> System.EventHandler<NuGet.Protocol.Plugins.ProtocolErrorEventArgs!>?
+NuGet.Protocol.Plugins.Receiver.FireFaultEvent(System.Exception! exception, NuGet.Protocol.Plugins.Message? message) -> void
+NuGet.Protocol.Plugins.Receiver.FireMessageReceivedEvent(NuGet.Protocol.Plugins.Message! message) -> void
 NuGet.Protocol.Plugins.Receiver.IsClosed.get -> bool
 NuGet.Protocol.Plugins.Receiver.IsDisposed.get -> bool
 NuGet.Protocol.Plugins.Receiver.IsDisposed.set -> void
-NuGet.Protocol.Plugins.Receiver.MessageReceived -> System.EventHandler<NuGet.Protocol.Plugins.MessageEventArgs>
+NuGet.Protocol.Plugins.Receiver.MessageReceived -> System.EventHandler<NuGet.Protocol.Plugins.MessageEventArgs!>?
 NuGet.Protocol.Plugins.Receiver.Receiver() -> void
 NuGet.Protocol.Plugins.Receiver.ThrowIfClosed() -> void
 NuGet.Protocol.Plugins.Receiver.ThrowIfDisposed() -> void
@@ -1310,8 +1310,8 @@ NuGet.Protocol.Plugins.Sender
 NuGet.Protocol.Plugins.Sender.Close() -> void
 NuGet.Protocol.Plugins.Sender.Connect() -> void
 NuGet.Protocol.Plugins.Sender.Dispose() -> void
-~NuGet.Protocol.Plugins.Sender.SendAsync(NuGet.Protocol.Plugins.Message message, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task
-~NuGet.Protocol.Plugins.Sender.Sender(System.IO.TextWriter writer) -> void
+NuGet.Protocol.Plugins.Sender.SendAsync(NuGet.Protocol.Plugins.Message! message, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+NuGet.Protocol.Plugins.Sender.Sender(System.IO.TextWriter! writer) -> void
 NuGet.Protocol.Plugins.SetCredentialsRequest
 NuGet.Protocol.Plugins.SetCredentialsRequest.PackageSourceRepository.get -> string!
 NuGet.Protocol.Plugins.SetCredentialsRequest.Password.get -> string?
@@ -1329,9 +1329,9 @@ NuGet.Protocol.Plugins.SetLogLevelResponse
 NuGet.Protocol.Plugins.SetLogLevelResponse.ResponseCode.get -> NuGet.Protocol.Plugins.MessageResponseCode
 NuGet.Protocol.Plugins.SetLogLevelResponse.SetLogLevelResponse(NuGet.Protocol.Plugins.MessageResponseCode responseCode) -> void
 NuGet.Protocol.Plugins.StandardInputReceiver
-~NuGet.Protocol.Plugins.StandardInputReceiver.StandardInputReceiver(System.IO.TextReader reader) -> void
+NuGet.Protocol.Plugins.StandardInputReceiver.StandardInputReceiver(System.IO.TextReader! reader) -> void
 NuGet.Protocol.Plugins.StandardOutputReceiver
-~NuGet.Protocol.Plugins.StandardOutputReceiver.StandardOutputReceiver(NuGet.Protocol.Plugins.IPluginProcess process) -> void
+NuGet.Protocol.Plugins.StandardOutputReceiver.StandardOutputReceiver(NuGet.Protocol.Plugins.IPluginProcess! process) -> void
 NuGet.Protocol.Plugins.SymmetricHandshake
 NuGet.Protocol.Plugins.SymmetricHandshake.CancellationToken.get -> System.Threading.CancellationToken
 NuGet.Protocol.Plugins.SymmetricHandshake.Dispose() -> void
