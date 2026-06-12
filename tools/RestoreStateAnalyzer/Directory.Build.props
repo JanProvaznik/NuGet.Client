@@ -1,0 +1,4 @@
+<Project>
+  <!-- Intentionally empty. Stops MSBuild Directory.Build.props inheritance so this standalone
+       investigation tool does NOT pick up the repository's Arcade SDK build customizations. -->
+</Project>

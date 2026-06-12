@@ -1,0 +1,7 @@
+<Project>
+  <!-- Intentionally empty. Disables Central Package Management inheritance from the repo root
+       Directory.Packages.props so this tool can pin package versions directly. -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+</Project>

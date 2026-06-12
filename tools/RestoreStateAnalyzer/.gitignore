@@ -1,0 +1,7 @@
+bin/
+obj/
+logs/
+*.binlog
+report.md
+*-report.md
+sample-report.md

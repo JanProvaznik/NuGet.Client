@@ -1,0 +1,3 @@
+<Project>
+  <!-- Intentionally empty. Stops MSBuild Directory.Build.targets inheritance from the repo root. -->
+</Project>
