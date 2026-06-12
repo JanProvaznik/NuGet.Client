@@ -25,8 +25,33 @@ namespace NuGet.Protocol.Plugins
     /// </summary>
     public sealed class PluginManager : IPluginManager, IDisposable
     {
-        private static readonly Lazy<IPluginManager> _lazy = new Lazy<IPluginManager>(() => new PluginManager());
+        private static Lazy<IPluginManager> _lazy = CreateLazyInstance();
+
+        /// <summary>
+        /// The shared, process-wide plugin manager.
+        /// </summary>
         public static IPluginManager Instance => _lazy.Value;
+
+        private static Lazy<IPluginManager> CreateLazyInstance() => new Lazy<IPluginManager>(() => new PluginManager());
+
+        /// <summary>
+        /// Disposes the current shared <see cref="Instance" /> - terminating any running plugin processes and
+        /// their idle timers - and resets it so the next access lazily creates a fresh instance.
+        /// </summary>
+        /// <remarks>
+        /// This exists for hosts that reuse the process across builds (for example MSBuild Server or
+        /// multithreaded MSBuild), where plugins must not outlive the build that started them. It is a no-op
+        /// when no instance has been created. Callers are responsible for ensuring no restore is in flight.
+        /// </remarks>
+        public static void ResetSharedInstance()
+        {
+            Lazy<IPluginManager> previous = Interlocked.Exchange(ref _lazy, CreateLazyInstance());
+
+            if (previous.IsValueCreated && previous.Value is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
+        }
 
         private ConnectionOptions _connectionOptions;
         private Lazy<IPluginDiscoverer> _discoverer;

@@ -29,6 +29,14 @@ tool instead:
 `NuGet.Frameworks`, `NuGet.Versioning`, `NuGet.Build.Tasks.Pack` (net8.0). `NuGet.PackageManagement` and
 `NuGet.Resolver` are **not** on this path (net472-only). **7,267** reachable methods/static-init nodes.
 
+> TFM note: this closure was built from the `nuget.client` repo, where `NuGet.Build.Tasks` builds for
+> net10.0 and the libraries for net8.0. The shipping .NET 10 SDK (10.0.101) actually loads
+> `NuGet.Build.Tasks.dll` built for **net9.0** and the libraries for **net8.0** (verified against the SDK's
+> on-disk assemblies). The **libraries — where essentially all the static/process state lives — match
+> shipping exactly (net8.0)**; only the task TFM differs (net10.0 analyzed vs net9.0 shipped), which does not
+> change any of the findings (none of NuGet.Build.Tasks' reachable static state is behind an `#if NET9/NET10`
+> branch). The all-net10 flavor only occurs under VMR source-build.
+
 **Entry points** (all resolved): regular path = `RestoreTask` + the DG-spec collection tasks
 (`Get*`, `WriteRestoreGraphTask`, `CheckForDuplicateNuGetItemsTask`, `WarnForInvalidProjectsTask`,
 `NuGetMessageTask`, `GetGlobalPropertyValueTask`); static-graph (opt-in) = `RestoreTaskEx`,
