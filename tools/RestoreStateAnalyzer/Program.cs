@@ -70,6 +70,14 @@ internal static class Program
         }
         Console.WriteLine($"Total real binding errors across reconstructed compilations: {totalErr}");
 
+        string? analyzerDll = args.FirstOrDefault(a => a.StartsWith("--msbuild-analyzer=", StringComparison.Ordinal))?.Substring("--msbuild-analyzer=".Length);
+        if (analyzerDll is not null)
+        {
+            Console.WriteLine("\n==== Running external MSBuild TaskAnalyzer (per-compilation) ====\n");
+            MsBuildAnalyzerRunner.Run(set, analyzerDll);
+            return 0;
+        }
+
         var analyzer = new Analyzer(set);
         Console.WriteLine("Building cross-assembly override/implementation map...");
         analyzer.BuildOverrideMap();

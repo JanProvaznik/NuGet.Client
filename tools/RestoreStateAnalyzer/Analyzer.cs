@@ -226,6 +226,16 @@ internal sealed class Analyzer
         {
             RecordSink(cat, api, methodId, inv);
         }
+
+        // Path.GetFullPath(string) resolves a relative path against the process CWD (MSBuildTask0002).
+        // The 2-arg overload (basePath, relativeTo) does not, so it is excluded.
+        if (SinkRules.TypeName(target.ContainingType) == "System.IO.Path"
+            && target.Name == "GetFullPath"
+            && inv.Arguments.Length == 1)
+        {
+            RecordSink(SinkCategory.PathGetFullPathAgainstCwd, "System.IO.Path.GetFullPath(string)", methodId, inv);
+        }
+
         EnqueueCall(target, methodId, inv);
     }
 
@@ -269,6 +279,12 @@ internal sealed class Analyzer
         if (write && SinkRules.TryClassifyPropertyWrite(p, out var cat, out var api))
         {
             RecordSink(cat, api, methodId, pr);
+        }
+
+        // Reading System.Environment.CurrentDirectory is a read of process-global CWD (MSBuildTask0002).
+        if (!write && SinkRules.TypeName(p.ContainingType) == "System.Environment" && p.Name == "CurrentDirectory")
+        {
+            RecordSink(SinkCategory.CurrentDirectoryRead, "System.Environment.CurrentDirectory (get)", methodId, pr);
         }
 
         if (p.IsStatic)

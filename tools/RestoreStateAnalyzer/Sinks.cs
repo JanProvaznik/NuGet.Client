@@ -37,6 +37,12 @@ internal static class SinkRules
                 category = SinkCategory.ProcessExit; api = "System.Environment." + name; return true;
             case "System.IO.Directory" when name == "SetCurrentDirectory":
                 category = SinkCategory.CurrentDirectoryChange; api = "System.IO.Directory.SetCurrentDirectory"; return true;
+            case "System.IO.Directory" when name == "GetCurrentDirectory":
+                category = SinkCategory.CurrentDirectoryRead; api = "System.IO.Directory.GetCurrentDirectory"; return true;
+            case "System.Environment" when name == "GetFolderPath":
+                category = SinkCategory.CurrentDirectoryRead; api = "System.Environment.GetFolderPath"; return true;
+            case "System.IO.Path" when name is "GetTempPath" or "GetTempFileName":
+                category = SinkCategory.CurrentDirectoryRead; api = "System.IO.Path." + name; return true;
             case "System.AppContext" when name is "SetSwitch" or "SetData":
                 category = SinkCategory.AppContextMutation; api = "System.AppContext." + name; return true;
             case "System.Console" when name is "SetOut" or "SetError" or "SetIn":

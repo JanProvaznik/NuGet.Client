@@ -8,6 +8,8 @@ internal enum SinkCategory
     EnvVarWrite,
     EnvVarRead,
     CurrentDirectoryChange,
+    CurrentDirectoryRead,
+    PathGetFullPathAgainstCwd,
     ConsoleRedirection,
     CultureChange,
     RegistryWrite,
