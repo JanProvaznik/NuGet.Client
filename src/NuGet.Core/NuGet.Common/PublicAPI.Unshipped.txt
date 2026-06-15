@@ -2,9 +2,11 @@
 NuGet.Common.NuGetLogCode.NU1512 = 1512 -> NuGet.Common.NuGetLogCode
 NuGet.Common.NuGetLogCode.NU5502 = 5502 -> NuGet.Common.NuGetLogCode
 NuGet.Common.NuGetTraits
+NuGet.Common.NuGetTraits.ConcurrencyUtilitiesDeleteOnClose.get -> bool
 NuGet.Common.NuGetTraits.DefaultCredentialsAfterCredentialProviders.get -> bool
 NuGet.Common.NuGetTraits.PackageIdValidationDisabled.get -> bool
 NuGet.Common.NuGetTraits.TestModeEnabled.get -> bool
+NuGet.Common.NuGetTraits.UseLegacyDependencyGraphSpecHashFunction.get -> bool
 NuGet.Common.NuGetTraits.UseSystemTextJsonDeserialization.get -> bool
 static NuGet.Common.NuGetTraits.Instance.get -> NuGet.Common.NuGetTraits!
 static NuGet.Common.NuGetTraits.UpdateFromEnvironment() -> void
