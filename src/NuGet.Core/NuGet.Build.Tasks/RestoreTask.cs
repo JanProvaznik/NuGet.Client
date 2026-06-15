@@ -158,9 +158,19 @@ namespace NuGet.Build.Tasks
 
             // In a host process that is reused across builds, tie the lifetime of restore's process-global
             // state to the build (instead of relying on process exit) so it does not leak into the next build.
-            if (ShouldResetProcessStateAfterBuild() && BuildEngine is IBuildEngine4 buildEngine4)
+            if (ShouldResetProcessStateAfterBuild())
             {
-                RestoreProcessStateCleanup.EnsureRegistered(buildEngine4);
+                // Reset environment-derived traits at the START of restore so this build observes the current
+                // environment - a reused process may otherwise carry values captured by an earlier build (or a
+                // prior end-of-build cleanup may not have run). This is also the seam where, for an enlightened
+                // multithreaded task, the traits would be re-read from the task's TaskEnvironment instead of the
+                // process environment (see the TaskEnvironment proposal).
+                NuGet.Common.NuGetTraits.UpdateFromEnvironment();
+
+                if (BuildEngine is IBuildEngine4 buildEngine4)
+                {
+                    RestoreProcessStateCleanup.EnsureRegistered(buildEngine4);
+                }
             }
 
             try
