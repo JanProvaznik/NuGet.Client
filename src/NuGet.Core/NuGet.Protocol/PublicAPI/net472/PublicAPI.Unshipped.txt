@@ -1,4 +1,5 @@
 #nullable enable
+static NuGet.Protocol.Plugins.PluginManager.ResetSharedInstance() -> void
 NuGet.Protocol.Events.ProtocolDiagnosticNupkgCopiedEvent.PackageId.get -> string!
 NuGet.Protocol.Events.ProtocolDiagnosticNupkgCopiedEvent.ProtocolDiagnosticNupkgCopiedEvent(string! source, long fileSize, string! packageId) -> void
 NuGet.Protocol.RepositoryCertificateInfo.NotAfter.init -> void

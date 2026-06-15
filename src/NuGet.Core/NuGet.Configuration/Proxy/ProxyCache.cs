@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Net;
+using System.Threading;
 using NuGet.Common;
 
 namespace NuGet.Configuration
@@ -27,7 +28,7 @@ namespace NuGet.Configuration
 
         // It's not likely that http proxy settings are set in machine wide settings,
         // so not passing machine wide settings to Settings.LoadDefaultSettings() should be fine.
-        private static readonly Lazy<ProxyCache> _instance = new Lazy<ProxyCache>(() => FromDefaultSettings());
+        private static Lazy<ProxyCache> _instance = new Lazy<ProxyCache>(() => FromDefaultSettings());
 
         private static ProxyCache FromDefaultSettings()
         {
@@ -37,6 +38,16 @@ namespace NuGet.Configuration
         }
 
         public static ProxyCache Instance => _instance.Value;
+
+        /// <summary>
+        /// Resets the shared <see cref="Instance" /> so the next access re-reads proxy settings from
+        /// configuration and the environment. Intended for hosts that reuse the process across builds, where
+        /// proxy/credential settings could change between builds.
+        /// </summary>
+        public static void ResetSharedInstance()
+        {
+            Interlocked.Exchange(ref _instance, new Lazy<ProxyCache>(() => FromDefaultSettings()));
+        }
 
         public Guid Version { get; private set; } = Guid.NewGuid();
 
