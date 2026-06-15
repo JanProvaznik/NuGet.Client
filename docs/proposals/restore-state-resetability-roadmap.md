@@ -50,6 +50,7 @@ Each step is a separate, reviewable, **stacked** PR in this fork. Order matters:
 | 2 | state-2 | `dev-JanProvaznik-state-2-reset` | **End-of-build reset.** `RestoreProcessStateCleanup : IDisposable` registered via `IBuildEngine4.RegisterTaskObject(..., Build, allowEarlyCollection: false)`; on dispose it disposes/reset the *owned* state (PluginManager → kills plugin processes + timers, ProxyCache, ownership-gated credential service, `NuGetTraits`). Off by default; ownership-tracked so it never touches VS-owned state. |
 | 3 | state-3 | `dev-JanProvaznik-state-3-reset-at-start` | **Reset at start of restore.** `NuGetTraits.UpdateFromEnvironment()` at the top of `RestoreTask.Execute`, so even a process whose prior cleanup didn't run starts each build from the current environment. |
 | 4 | state-4 | `dev-JanProvaznik-state-4-taskenvironment` | **Read the environment from the task, not the process.** `NuGetTraits.UpdateFromEnvironment(IEnvironmentVariableReader)` made public; new `TaskEnvironmentVariableReader` adapts `Func<string,string?>` (the seam that binds `TaskEnvironment.GetEnvironmentVariable`); start-of-restore reset reads through the task's reader. Spec: `restore-taskenvironment-reset.md`. |
+| 5 | state-5 | `dev-JanProvaznik-state-5-more-traits` | **Migrate two more cached env flags.** `ConcurrencyUtilities` delete-on-close (`NUGET_ConcurrencyUtils_DeleteOnClose`) and `DependencyGraphSpec` legacy hash (`NUGET_ENABLE_LEGACY_DGSPEC_HASH_FUNCTION`) onto `NuGetTraits`. Analyzer-validated: 12 → 10. |
 
 Gating: all reset behavior is **off by default**, opt-in via the `ResetProcessStateAfterBuild` MSBuild property
 or `NUGET_RESTORE_RESET_PROCESS_STATE` env var. Classic single-shot `dotnet build` and any VS-hosted path are
@@ -70,10 +71,14 @@ parse caches, JSON source-gen contexts, object pools, machine-invariant helpers,
 
 ## 5. Remaining work
 
-- **Migrate the remaining cached environment statics** (12 → only `NuGetTraits._instance`): `NuGetEnvironment`
-  home/temp, `ConcurrencyUtilities`, `DependencyGraphSpec`, `X509ChainBuildPolicyFactory`, and the singleton
-  holders (`PluginManager`/`PluginLogger`/`ExceptionLogger`/`SourceRepositoryDependencyProvider`). Re-run
-  `EnvStaticsAnalyzer` after each batch to drive the count down.
+Analyzer status: cached environment statics reduced **15 → 10** across the stack; `NuGetTraits._instance` is the
+single intended resettable holder. The remaining 9 are not simple boolean flags — they are singletons, path
+lazies, test seams, and policy/throttle objects with distinct reset semantics:
+
+- **Migrate the remaining cached environment statics** (drive 10 → only `NuGetTraits._instance`): `NuGetEnvironment`
+  home/temp paths, `SourceRepositoryDependencyProvider._throttle` (env-sized semaphore),
+  `X509ChainBuildPolicyFactory.Policy`, and the singleton holders (`PluginManager`/`PluginLogger`/`ExceptionLogger`,
+  plus the `StreamExtensions`/`ZipArchiveExtensions` test seams). Re-run `EnvStaticsAnalyzer` after each batch.
 - **HttpSource handler-cache disposal** via the provider factory (release sockets on reset).
 - **Enlighten `RestoreTask` as `IMultiThreadableTask`** once MSBuild ships `TaskEnvironment` in the referenced
   `Microsoft.Build.Framework`: annotate `[MSBuildMultiThreadableTask]`, bind `TaskEnvironment.GetEnvironmentVariable`
