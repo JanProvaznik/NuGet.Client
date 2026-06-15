@@ -16,7 +16,8 @@ namespace NuGet.Common
     /// Lives in NuGet.Common (the lowest common NuGet assembly) so every higher assembly can consume it instead
     /// of caching environment variables in its own statics. In a process reused across builds (MSBuild Server /
     /// multithreaded MSBuild) the end-of-build cleanup calls <see cref="UpdateFromEnvironment()" /> so the next
-    /// build observes the current environment; tests use the internal reader-accepting overload to override.
+    /// build observes the current environment; tests and an enlightened multithreaded task use the
+    /// reader-accepting overload to supply their own environment source.
     /// </remarks>
     public sealed class NuGetTraits
     {
@@ -54,6 +55,11 @@ namespace NuGet.Common
         /// <summary>Recreate the shared <see cref="Instance" /> from the current environment.</summary>
         public static void UpdateFromEnvironment() => UpdateFromEnvironment(EnvironmentVariableWrapper.Instance);
 
-        internal static void UpdateFromEnvironment(IEnvironmentVariableReader env) => Volatile.Write(ref _instance, new NuGetTraits(env));
+        /// <summary>
+        /// Recreate the shared <see cref="Instance" /> from the supplied environment source. Used by an
+        /// enlightened MSBuild task to re-read traits from its <c>TaskEnvironment</c> (rather than the process
+        /// environment) at the start of a build, and by tests.
+        /// </summary>
+        public static void UpdateFromEnvironment(IEnvironmentVariableReader env) => Volatile.Write(ref _instance, new NuGetTraits(env));
     }
 }

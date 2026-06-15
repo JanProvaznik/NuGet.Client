@@ -162,10 +162,12 @@ namespace NuGet.Build.Tasks
             {
                 // Reset environment-derived traits at the START of restore so this build observes the current
                 // environment - a reused process may otherwise carry values captured by an earlier build (or a
-                // prior end-of-build cleanup may not have run). This is also the seam where, for an enlightened
-                // multithreaded task, the traits would be re-read from the task's TaskEnvironment instead of the
-                // process environment (see the TaskEnvironment proposal).
-                NuGet.Common.NuGetTraits.UpdateFromEnvironment();
+                // prior end-of-build cleanup may not have run). The traits are read from this task's
+                // environment reader: today that is the process environment (EnvironmentVariableWrapper), but an
+                // enlightened multithreaded RestoreTask sets _environmentVariableReader to a
+                // TaskEnvironmentVariableReader backed by IMultiThreadableTask.TaskEnvironment, so the traits are
+                // re-read from the task's isolated environment instead of process-global state.
+                NuGet.Common.NuGetTraits.UpdateFromEnvironment(_environmentVariableReader);
 
                 if (BuildEngine is IBuildEngine4 buildEngine4)
                 {
