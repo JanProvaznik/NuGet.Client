@@ -2,35 +2,21 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using NuGet.Common;
 
 namespace NuGet.Protocol.Core.Types
 {
     public static class NuGetTestMode
     {
-        private const string _testModeEnvironmentVariableName = "NuGetTestModeEnabled";
         public const string NuGetTestClientName = "NuGet Test Client";
 
         static NuGetTestMode()
         {
-            // cached for the life-time of the app domain
-            Enabled = FromEnvironmentVariable();
+            // Cached for the life-time of the app domain via the resettable NuGetTraits singleton.
+            Enabled = NuGetTraits.Instance.TestModeEnabled;
         }
 
         public static bool Enabled { get; private set; }
-
-        private static bool FromEnvironmentVariable()
-        {
-#pragma warning disable RS0030 // Do not use banned APIs
-            var testMode = Environment.GetEnvironmentVariable(_testModeEnvironmentVariableName);
-#pragma warning restore RS0030 // Do not use banned APIs
-            if (String.IsNullOrEmpty(testMode))
-            {
-                return false;
-            }
-
-            bool isEnabled;
-            return Boolean.TryParse(testMode, out isEnabled) && isEnabled;
-        }
 
 
         /// <summary>

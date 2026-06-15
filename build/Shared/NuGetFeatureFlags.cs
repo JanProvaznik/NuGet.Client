@@ -13,7 +13,7 @@ namespace NuGet.Shared
         internal const string UseSystemTextJsonDeserializationEnvVar = "NUGET_USE_SYSTEM_TEXT_JSON_DESERIALIZATION";
 
         private static readonly Lazy<bool> _isSystemTextJsonDeserializationEnabledByEnvironment =
-            new Lazy<bool>(() => IsSystemTextJsonDeserializationEnabledByEnvironment(EnvironmentVariableWrapper.Instance));
+            new Lazy<bool>(() => NuGet.Common.NuGetTraits.Instance.UseSystemTextJsonDeserialization);
 
         /// <summary>Feature switch for System.Text.Json deserialization. Defaults to <see langword="false"/> (Newtonsoft is the default).</summary>
         [FeatureSwitchDefinition(UseSystemTextJsonDeserializationSwitchName)]

@@ -24,13 +24,6 @@ namespace NuGet.Credentials
         /// ambient Windows credentials, instead of support baked into HttpSourceCredentials
         /// </summary>
         public static bool DefaultCredentialsAfterCredentialProviders { get; set; }
-            = GetFlagFromEnvironmentVariable(DefaultCredentialsAfterCredentialProvidersEnvironmentVariableName);
-
-        private static bool GetFlagFromEnvironmentVariable(string variableName)
-        {
-            bool flag;
-            var flagString = environmentVariableReader.GetEnvironmentVariable(variableName);
-            return bool.TryParse(flagString, out flag) && flag;
-        }
+            = NuGetTraits.Instance.DefaultCredentialsAfterCredentialProviders;
     }
 }
