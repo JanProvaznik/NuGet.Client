@@ -277,3 +277,51 @@ not-feature-flag* reads (e.g. a one-off variable used in a specific component). 
 - NuGet env-var guideline: `docs/coding-guidelines.md` → "Getting or Setting Environment Variables"
 - Existing pattern being generalized: `build/Shared/NuGetFeatureFlags.cs`
 - Process-reuse teardown context: dotnet/msbuild#13702
+
+## Appendix B — cached env-var call sites (analyzer-generated)
+
+The complete inventory below was produced by an interprocedural, cross-assembly analyzer that flags **static
+fields/properties whose value is derived from an environment variable** (directly, via a `Lazy<T>` factory, or via
+a `??=`/static-ctor cache assignment), following calls into helpers. It is more accurate than grep: it ignores
+per-call reads that correctly use `IEnvironmentVariableReader` (they re-read and are fine), and it excludes
+static state that *looks* env-derived but is not — e.g. `RuntimeEnvironmentHelper._isRunningInVisualStudio`
+(process-name based) is correctly **not** listed.
+
+Two shapes appear: **(F)** a flag/value cached from env (the primary migration target), and **(S)** a singleton
+whose *constructor/helper* reads env as a side effect of construction (migrate by routing that read through
+`NuGetTraits`, or accept). 15 members across the regular `dotnet restore` closure (`NuGet.Clients`/CLI not
+included — follow-up):
+
+`NuGet.Common`
+- (F) [`NuGetEnvironment._getHome`](https://github.com/JanProvaznik/NuGet.Client/blob/8119f5dc403909784b3c8251ec90beb945e2f4ef/src/NuGet.Core/NuGet.Common/PathUtil/NuGetEnvironment.cs#L27) `Lazy<string>` — via `GetHome` (`HOME`/`USERPROFILE`/`DOTNET_CLI_HOME`)
+- (F) [`NuGetEnvironment._nuGetTempDirectory`](https://github.com/JanProvaznik/NuGet.Client/blob/8119f5dc403909784b3c8251ec90beb945e2f4ef/src/NuGet.Core/NuGet.Common/PathUtil/NuGetEnvironment.cs#L29) `string` — assigned via `GetNuGetTempDirectory` (`NUGET_SCRATCH`)
+- (F) [`ConcurrencyUtilities._useDeleteOnClose`](https://github.com/JanProvaznik/NuGet.Client/blob/8119f5dc403909784b3c8251ec90beb945e2f4ef/src/NuGet.Core/NuGet.Common/ConcurrencyUtilities.cs#L22) `bool?` — assigned-from-env (`NUGET_ConcurrencyUtils_DeleteOnClose`)
+- (S) [`ExceptionLogger.Instance`](https://github.com/JanProvaznik/NuGet.Client/blob/8119f5dc403909784b3c8251ec90beb945e2f4ef/src/NuGet.Core/NuGet.Common/Logging/ExceptionLogger.cs#L39) — via ctor (reads a debug env var)
+
+`build/Shared`
+- (F) [`NuGetFeatureFlags._isSystemTextJsonDeserializationEnabledByEnvironment`](https://github.com/JanProvaznik/NuGet.Client/blob/8119f5dc403909784b3c8251ec90beb945e2f4ef/build/Shared/NuGetFeatureFlags.cs#L15) `Lazy<bool>` — `NUGET_USE_SYSTEM_TEXT_JSON_DESERIALIZATION` (compiled into *many* assemblies)
+
+`NuGet.Protocol`
+- (F) [`NuGetTestMode.Enabled`](https://github.com/JanProvaznik/NuGet.Client/blob/8119f5dc403909784b3c8251ec90beb945e2f4ef/src/NuGet.Core/NuGet.Protocol/NuGetTestMode.cs#L19) `bool` — static-ctor assigned via `FromEnvironmentVariable` (`NuGetTestModeEnabled`)
+- (F) [`PackageIdValidator.IsValidationDisabled`](https://github.com/JanProvaznik/NuGet.Client/blob/8119f5dc403909784b3c8251ec90beb945e2f4ef/src/NuGet.Core/NuGet.Protocol/Utility/PackageIdValidator.cs#L15) `Lazy<bool>` — via `IsPackageIdValidationDisabled`
+- (S) [`PluginManager._lazy`](https://github.com/JanProvaznik/NuGet.Client/blob/8119f5dc403909784b3c8251ec90beb945e2f4ef/src/NuGet.Core/NuGet.Protocol/Plugins/PluginManager.cs#L28) — via ctor (plugin-path env)
+- (S) [`PluginLogger.DefaultInstance`](https://github.com/JanProvaznik/NuGet.Client/blob/8119f5dc403909784b3c8251ec90beb945e2f4ef/src/NuGet.Core/NuGet.Protocol/Plugins/Logging/PluginLogger.cs#L20) — via ctor (plugin-log env)
+
+`NuGet.Credentials`
+- (F) [`PreviewFeatureSettings.DefaultCredentialsAfterCredentialProviders`](https://github.com/JanProvaznik/NuGet.Client/blob/8119f5dc403909784b3c8251ec90beb945e2f4ef/src/NuGet.Core/NuGet.Credentials/PreviewFeatureSettings.cs#L26) `bool` — via `GetFlagFromEnvironmentVariable`
+
+`NuGet.Packaging`
+- (F) [`X509ChainBuildPolicyFactory.Policy`](https://github.com/JanProvaznik/NuGet.Client/blob/8119f5dc403909784b3c8251ec90beb945e2f4ef/src/NuGet.Core/NuGet.Packaging/Signing/ChainBuilding/X509ChainBuildPolicyFactory.cs#L18) — assigned via an `IEnvironmentVariableReader` read
+- (S) [`StreamExtensions.Testable.Default`](https://github.com/JanProvaznik/NuGet.Client/blob/8119f5dc403909784b3c8251ec90beb945e2f4ef/src/NuGet.Core/NuGet.Packaging/PackageExtraction/StreamExtensions.cs#L71) — via ctor (test-hook env)
+- (S) [`ZipArchiveExtensions.Testable.Default`](https://github.com/JanProvaznik/NuGet.Client/blob/8119f5dc403909784b3c8251ec90beb945e2f4ef/src/NuGet.Core/NuGet.Packaging/PackageExtraction/ZipArchiveExtensions.cs#L81) — via ctor (test-hook env)
+
+`NuGet.ProjectModel`
+- (F) [`DependencyGraphSpec.UseLegacyHashFunction`](https://github.com/JanProvaznik/NuGet.Client/blob/8119f5dc403909784b3c8251ec90beb945e2f4ef/src/NuGet.Core/NuGet.ProjectModel/DependencyGraphSpec.cs#L25) `bool?` — assigned-from-env (`NUGET_ENABLE_LEGACY_DGSPEC_HASH_FUNCTION`)
+
+`NuGet.Commands`
+- (S) [`SourceRepositoryDependencyProvider._throttle`](https://github.com/JanProvaznik/NuGet.Client/blob/8119f5dc403909784b3c8251ec90beb945e2f4ef/src/NuGet.Core/NuGet.Commands/RestoreCommand/SourceRepositoryDependencyProvider.cs#L44) `SemaphoreSlim` — via `GetThrottleSemaphoreSlim` (concurrency env)
+
+The migration target is the **(F)** members (and the env reads inside the **(S)** constructors): each becomes a
+typed member of `NuGetTraits`, read once via `IEnvironmentVariableReader` and refreshable via
+`UpdateFromEnvironment()`.
+
