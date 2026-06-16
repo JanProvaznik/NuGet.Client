@@ -38,6 +38,9 @@ namespace NuGet.Common
 
             DefaultCredentialsAfterCredentialProviders =
                 bool.TryParse(env.GetEnvironmentVariable("NUGET_CREDENTIAL_PROVIDER_OVERRIDE_DEFAULT"), out bool defaultCreds) && defaultCreds;
+
+            ConcurrencyUtilitiesDeleteOnClose =
+                env.GetEnvironmentVariable("NUGET_ConcurrencyUtils_DeleteOnClose") == "1";
         }
 
         /// <summary>Env: <c>NUGET_USE_SYSTEM_TEXT_JSON_DESERIALIZATION</c>.</summary>
@@ -51,6 +54,9 @@ namespace NuGet.Common
 
         /// <summary>Env: <c>NUGET_CREDENTIAL_PROVIDER_OVERRIDE_DEFAULT</c>.</summary>
         public bool DefaultCredentialsAfterCredentialProviders { get; }
+
+        /// <summary>Env: <c>NUGET_ConcurrencyUtils_DeleteOnClose</c> (opt-in, value <c>"1"</c>).</summary>
+        public bool ConcurrencyUtilitiesDeleteOnClose { get; }
 
         /// <summary>Recreate the shared <see cref="Instance" /> from the current environment.</summary>
         public static void UpdateFromEnvironment() => UpdateFromEnvironment(EnvironmentVariableWrapper.Instance);
