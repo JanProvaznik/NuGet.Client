@@ -37,6 +37,12 @@ virtual/interface dispatch — i.e. accurate **across assembly boundaries**.
   `NuGet.Build.Tasks` and its transitive-call-chain rule **dead-ends at the assembly boundary** — confirming why
   a cross-assembly analyzer was necessary.
 
+A full **per-member resetability audit** of all 1357 reachable static members lives in
+`restore-static-state-audit.md` (curated analysis + hand-adjudication of the 35-member attention surface) and
+`restore-static-state-inventory.md` (the exhaustive machine-generated enumeration with verdicts + permalinks). It
+concludes that 1346 members provably cannot leak per-build state, leaving a small, enumerated residual of ~11
+environment/path/throttle caches plus the HttpSource handler-cache disposal.
+
 (Findings + the CWD analysis were posted to dotnet/msbuild#13702.)
 
 ## 3. Exact sequence to achieve resetability (the stacked PRs)
