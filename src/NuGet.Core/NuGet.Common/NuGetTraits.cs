@@ -44,6 +44,9 @@ namespace NuGet.Common
 
             UseLegacyDependencyGraphSpecHashFunction = string.Equals(
                 env.GetEnvironmentVariable("NUGET_ENABLE_LEGACY_DGSPEC_HASH_FUNCTION"), bool.TrueString, StringComparison.OrdinalIgnoreCase);
+
+            ShowStack = string.Equals(
+                env.GetEnvironmentVariable("NUGET_SHOW_STACK")?.Trim(), "true", StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>Env: <c>NUGET_USE_SYSTEM_TEXT_JSON_DESERIALIZATION</c>.</summary>
@@ -63,6 +66,9 @@ namespace NuGet.Common
 
         /// <summary>Env: <c>NUGET_ENABLE_LEGACY_DGSPEC_HASH_FUNCTION</c>.</summary>
         public bool UseLegacyDependencyGraphSpecHashFunction { get; }
+
+        /// <summary>Env: <c>NUGET_SHOW_STACK</c> - whether to print full exception stacks to the user.</summary>
+        public bool ShowStack { get; }
 
         /// <summary>Recreate the shared <see cref="Instance" /> from the current environment.</summary>
         public static void UpdateFromEnvironment() => UpdateFromEnvironment(EnvironmentVariableWrapper.Instance);

@@ -7,10 +7,17 @@ namespace NuGet.Common
 {
     public class ExceptionLogger
     {
+        private readonly bool? _showStackOverride;
+
         public ExceptionLogger(IEnvironmentVariableReader reader)
         {
-            // We can cache this value since environment variables should be fixed during runtime.
-            ShowStack = ShouldShowStack(reader);
+            // An explicit reader (used by tests) pins the value; the shared Instance instead reads it live from
+            // the resettable NuGetTraits singleton.
+            _showStackOverride = ShouldShowStack(reader);
+        }
+
+        private ExceptionLogger()
+        {
         }
 
         /// <summary>
@@ -22,7 +29,7 @@ namespace NuGet.Common
         /// <returns>
         /// True if the exception stack should be displayed to the user. False, otherwise.
         /// </returns>
-        public bool ShowStack { get; }
+        public bool ShowStack => _showStackOverride ?? NuGetTraits.Instance.ShowStack;
 
         private static bool ShouldShowStack(IEnvironmentVariableReader reader)
         {
@@ -36,6 +43,6 @@ namespace NuGet.Common
             return string.Equals(rawShowStack.Trim(), "true", StringComparison.OrdinalIgnoreCase);
         }
 
-        public static ExceptionLogger Instance { get; } = new ExceptionLogger(EnvironmentVariableWrapper.Instance);
+        public static ExceptionLogger Instance { get; } = new ExceptionLogger();
     }
 }
