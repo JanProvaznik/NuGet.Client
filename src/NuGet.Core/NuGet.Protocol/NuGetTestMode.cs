@@ -2,34 +2,25 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using NuGet.Common;
 
 namespace NuGet.Protocol.Core.Types
 {
     public static class NuGetTestMode
     {
-        private const string _testModeEnvironmentVariableName = "NuGetTestModeEnabled";
         public const string NuGetTestClientName = "NuGet Test Client";
 
-        static NuGetTestMode()
+        private static bool? _testModeOverride;
+
+        /// <summary>
+        /// Whether NuGet is running in test mode (env <c>NuGetTestModeEnabled</c>), read live from the resettable
+        /// <see cref="NuGetTraits" /> so a reused process observes the current value. A test may temporarily
+        /// override it via <see cref="InvokeTestFunctionAgainstTestMode{T}" />.
+        /// </summary>
+        public static bool Enabled
         {
-            // cached for the life-time of the app domain
-            Enabled = FromEnvironmentVariable();
-        }
-
-        public static bool Enabled { get; private set; }
-
-        private static bool FromEnvironmentVariable()
-        {
-#pragma warning disable RS0030 // Do not use banned APIs
-            var testMode = Environment.GetEnvironmentVariable(_testModeEnvironmentVariableName);
-#pragma warning restore RS0030 // Do not use banned APIs
-            if (String.IsNullOrEmpty(testMode))
-            {
-                return false;
-            }
-
-            bool isEnabled;
-            return Boolean.TryParse(testMode, out isEnabled) && isEnabled;
+            get => _testModeOverride ?? NuGetTraits.Instance.TestModeEnabled;
+            private set => _testModeOverride = value;
         }
 
 
