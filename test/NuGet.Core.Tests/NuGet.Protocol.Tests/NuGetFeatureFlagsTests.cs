@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.Collections.Generic;
+using NuGet.Common;
 using NuGet.Shared;
 using Test.Utility;
 using Xunit;
@@ -14,6 +15,25 @@ namespace NuGet.Protocol.Tests
         public void UseSystemTextJsonDeserializationFeatureSwitch_Default_ReturnsFalse()
         {
             Assert.False(NuGetFeatureFlags.UseSystemTextJsonDeserializationFeatureSwitch);
+        }
+
+        [Fact]
+        public void IsSystemTextJsonDeserializationEnabledByEnvironment_ProductionPath_ReReadsAfterNuGetTraitsReset()
+        {
+            try
+            {
+                NuGetTraits.UpdateFromEnvironment(new TestEnvironmentVariableReader(
+                    new Dictionary<string, string> { [NuGetFeatureFlags.UseSystemTextJsonDeserializationEnvVar] = "true" }));
+                Assert.True(NuGetFeatureFlags.IsSystemTextJsonDeserializationEnabledByEnvironment());
+
+                // A reused process whose environment no longer sets the flag must observe the change.
+                NuGetTraits.UpdateFromEnvironment(TestEnvironmentVariableReader.EmptyInstance);
+                Assert.False(NuGetFeatureFlags.IsSystemTextJsonDeserializationEnabledByEnvironment());
+            }
+            finally
+            {
+                NuGetTraits.UpdateFromEnvironment();
+            }
         }
 
         [Fact]

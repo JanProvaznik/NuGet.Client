@@ -12,9 +12,6 @@ namespace NuGet.Shared
         internal const string UseSystemTextJsonDeserializationSwitchName = "NuGet.UseSystemTextJsonDeserialization";
         internal const string UseSystemTextJsonDeserializationEnvVar = "NUGET_USE_SYSTEM_TEXT_JSON_DESERIALIZATION";
 
-        private static readonly Lazy<bool> _isSystemTextJsonDeserializationEnabledByEnvironment =
-            new Lazy<bool>(() => IsSystemTextJsonDeserializationEnabledByEnvironment(EnvironmentVariableWrapper.Instance));
-
         /// <summary>Feature switch for System.Text.Json deserialization. Defaults to <see langword="false"/> (Newtonsoft is the default).</summary>
         [FeatureSwitchDefinition(UseSystemTextJsonDeserializationSwitchName)]
         internal static bool UseSystemTextJsonDeserializationFeatureSwitch { get; } =
@@ -22,15 +19,15 @@ namespace NuGet.Shared
 
         /// <summary>Returns <see langword="true"/> when env var <c>NUGET_USE_SYSTEM_TEXT_JSON_DESERIALIZATION</c> is <c>true</c>.</summary>
         /// <param name="env">
-        /// Pass <see langword="null"/> (or omit) in production code to use the cached <see cref="Lazy{T}"/> value,
-        /// avoiding repeated allocations on .NET Framework. Pass an explicit <see cref="IEnvironmentVariableReader"/>
-        /// only in tests to override the value.
+        /// Pass <see langword="null"/> (or omit) in production code to read the value from the resettable
+        /// <see cref="NuGet.Common.NuGetTraits"/> singleton (so a reused process observes the current environment).
+        /// Pass an explicit <see cref="IEnvironmentVariableReader"/> only in tests to override the value.
         /// </param>
         internal static bool IsSystemTextJsonDeserializationEnabledByEnvironment(IEnvironmentVariableReader? env = null)
         {
             if (env is null)
             {
-                return _isSystemTextJsonDeserializationEnabledByEnvironment.Value;
+                return NuGet.Common.NuGetTraits.Instance.UseSystemTextJsonDeserialization;
             }
 
             string? envValue = env.GetEnvironmentVariable(UseSystemTextJsonDeserializationEnvVar);

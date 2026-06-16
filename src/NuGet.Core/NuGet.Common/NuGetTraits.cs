@@ -1,6 +1,7 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Threading;
 
 namespace NuGet.Common
@@ -27,7 +28,12 @@ namespace NuGet.Common
 
         internal NuGetTraits(IEnvironmentVariableReader env)
         {
+            UseSystemTextJsonDeserialization = string.Equals(
+                env.GetEnvironmentVariable("NUGET_USE_SYSTEM_TEXT_JSON_DESERIALIZATION"), "true", StringComparison.OrdinalIgnoreCase);
         }
+
+        /// <summary>Env: <c>NUGET_USE_SYSTEM_TEXT_JSON_DESERIALIZATION</c>.</summary>
+        public bool UseSystemTextJsonDeserialization { get; }
 
         /// <summary>Recreate the shared <see cref="Instance" /> from the current environment.</summary>
         public static void UpdateFromEnvironment() => UpdateFromEnvironment(EnvironmentVariableWrapper.Instance);
