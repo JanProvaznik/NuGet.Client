@@ -45,6 +45,12 @@ environment/path/throttle caches plus the HttpSource handler-cache disposal.
 
 (Findings + the CWD analysis were posted to dotnet/msbuild#13702.)
 
+The **timing** of the reset (where in a normal `dotnet build` to invalidate the caches) is analyzed in
+`restore-reset-timing.md`: restore and build run as two submissions inside one `BeginBuild`/`EndBuild`, so the
+`RegisterTaskObject(Build)` cleanup fires at `EndBuild` (after the whole build); the only NuGet task in the build
+phase (`GetReferenceNearestTargetFrameworkTask`) is cache-irrelevant, so a host that wants to free plugins/sockets
+before the compile phase should tear down at the end of the Restore submission (`AfterTargets="Restore"`).
+
 ## 3. Exact sequence to achieve resetability (the stacked PRs)
 
 Each step is a separate, reviewable, **stacked** PR in this fork. Order matters: each builds on the previous.
