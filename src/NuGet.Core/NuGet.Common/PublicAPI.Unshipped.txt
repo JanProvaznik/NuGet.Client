@@ -6,6 +6,7 @@ NuGet.Common.NuGetTraits.ConcurrencyUtilitiesDeleteOnClose.get -> bool
 NuGet.Common.NuGetTraits.DefaultCredentialsAfterCredentialProviders.get -> bool
 NuGet.Common.NuGetTraits.PackageIdValidationDisabled.get -> bool
 NuGet.Common.NuGetTraits.TestModeEnabled.get -> bool
+NuGet.Common.NuGetTraits.UseLegacyDependencyGraphSpecHashFunction.get -> bool
 NuGet.Common.NuGetTraits.UseSystemTextJsonDeserialization.get -> bool
 static NuGet.Common.NuGetTraits.Instance.get -> NuGet.Common.NuGetTraits!
 static NuGet.Common.NuGetTraits.UpdateFromEnvironment() -> void

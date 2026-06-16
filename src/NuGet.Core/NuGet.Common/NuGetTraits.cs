@@ -41,6 +41,9 @@ namespace NuGet.Common
 
             ConcurrencyUtilitiesDeleteOnClose =
                 env.GetEnvironmentVariable("NUGET_ConcurrencyUtils_DeleteOnClose") == "1";
+
+            UseLegacyDependencyGraphSpecHashFunction = string.Equals(
+                env.GetEnvironmentVariable("NUGET_ENABLE_LEGACY_DGSPEC_HASH_FUNCTION"), bool.TrueString, StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>Env: <c>NUGET_USE_SYSTEM_TEXT_JSON_DESERIALIZATION</c>.</summary>
@@ -57,6 +60,9 @@ namespace NuGet.Common
 
         /// <summary>Env: <c>NUGET_ConcurrencyUtils_DeleteOnClose</c> (opt-in, value <c>"1"</c>).</summary>
         public bool ConcurrencyUtilitiesDeleteOnClose { get; }
+
+        /// <summary>Env: <c>NUGET_ENABLE_LEGACY_DGSPEC_HASH_FUNCTION</c>.</summary>
+        public bool UseLegacyDependencyGraphSpecHashFunction { get; }
 
         /// <summary>Recreate the shared <see cref="Instance" /> from the current environment.</summary>
         public static void UpdateFromEnvironment() => UpdateFromEnvironment(EnvironmentVariableWrapper.Instance);
