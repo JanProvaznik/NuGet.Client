@@ -19,18 +19,17 @@ namespace NuGet.Credentials
 
         internal static IEnvironmentVariableReader environmentVariableReader { get; set; } = EnvironmentVariableWrapper.Instance;
 
+        private static bool? _defaultCredentialsAfterCredentialProvidersOverride;
+
         /// <summary>
         /// Use DefaultNetworkCredentialsCredentialProvider after plugin credential providers to handle using the user's
-        /// ambient Windows credentials, instead of support baked into HttpSourceCredentials
+        /// ambient Windows credentials, instead of support baked into HttpSourceCredentials. Read live from the
+        /// resettable <see cref="NuGetTraits" /> unless explicitly overridden.
         /// </summary>
-        public static bool DefaultCredentialsAfterCredentialProviders { get; set; }
-            = GetFlagFromEnvironmentVariable(DefaultCredentialsAfterCredentialProvidersEnvironmentVariableName);
-
-        private static bool GetFlagFromEnvironmentVariable(string variableName)
+        public static bool DefaultCredentialsAfterCredentialProviders
         {
-            bool flag;
-            var flagString = environmentVariableReader.GetEnvironmentVariable(variableName);
-            return bool.TryParse(flagString, out flag) && flag;
+            get => _defaultCredentialsAfterCredentialProvidersOverride ?? NuGetTraits.Instance.DefaultCredentialsAfterCredentialProviders;
+            set => _defaultCredentialsAfterCredentialProvidersOverride = value;
         }
     }
 }

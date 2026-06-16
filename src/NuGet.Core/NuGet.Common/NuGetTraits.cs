@@ -35,6 +35,9 @@ namespace NuGet.Common
 
             PackageIdValidationDisabled = string.Equals(
                 env.GetEnvironmentVariable("NUGET_DISABLE_PACKAGEID_VALIDATION"), bool.TrueString, StringComparison.OrdinalIgnoreCase);
+
+            DefaultCredentialsAfterCredentialProviders =
+                bool.TryParse(env.GetEnvironmentVariable("NUGET_CREDENTIAL_PROVIDER_OVERRIDE_DEFAULT"), out bool defaultCreds) && defaultCreds;
         }
 
         /// <summary>Env: <c>NUGET_USE_SYSTEM_TEXT_JSON_DESERIALIZATION</c>.</summary>
@@ -45,6 +48,9 @@ namespace NuGet.Common
 
         /// <summary>Env: <c>NUGET_DISABLE_PACKAGEID_VALIDATION</c>.</summary>
         public bool PackageIdValidationDisabled { get; }
+
+        /// <summary>Env: <c>NUGET_CREDENTIAL_PROVIDER_OVERRIDE_DEFAULT</c>.</summary>
+        public bool DefaultCredentialsAfterCredentialProviders { get; }
 
         /// <summary>Recreate the shared <see cref="Instance" /> from the current environment.</summary>
         public static void UpdateFromEnvironment() => UpdateFromEnvironment(EnvironmentVariableWrapper.Instance);
