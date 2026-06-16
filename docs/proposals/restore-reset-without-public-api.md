@@ -75,7 +75,21 @@ reason about, in exchange for shrinking the maintained public surface from ~12 m
 
 ## Recommendation
 
-If the goal is "smallest possible public API," adopt the single `NuGetProcessState` seam and keep `NuGetTraits`
-and all `Reset*` methods internal to their assemblies. If the goal is "discoverable, individually testable
-building blocks," the current per-component public `Reset*` methods are simpler to follow. Either way, **some**
-public API is required by NuGet's no-product-IVT policy; the realistic target is *minimal*, not *zero*.
+**Decision: keep the `NuGetTraits` design** (the current implementation), accepting its modest public surface,
+rather than collapsing to the `NuGetProcessState` registry seam. Rationale:
+
+- **Testability** — each setting is a property you can assert directly (`NuGetTraits.Instance.TestModeEnabled`),
+  and `UpdateFromEnvironment(IEnvironmentVariableReader)` lets a test drive the whole set from a fake environment.
+  The registry's internal callbacks are harder to exercise and verify.
+- **Discoverability & locality** — one centralized, documented type holds all env-derived engine settings, instead
+  of reset logic scattered across self-registering callbacks with module-init/first-use timing to reason about
+  ("spooky action at a distance").
+- **Familiar pattern** — it mirrors MSBuild's own `Traits` class, so reviewers and future maintainers already know
+  the shape.
+- **The public-API cost is small and bounded** — one coherent type plus the active-teardown `Reset*` methods (which
+  must be public regardless, because they are invoked across assemblies and product-to-product IVT is banned).
+
+The `NuGetProcessState` registry above remains documented as the fallback **iff** a hard "minimize public API"
+constraint is later imposed; it trades clarity and testability for ~2 public members instead of ~12. Absent that
+constraint, `NuGetTraits` is preferred. Either way, **some** public API is required by NuGet's no-product-IVT
+policy — *zero* is not achievable.
