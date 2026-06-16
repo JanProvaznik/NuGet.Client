@@ -14,10 +14,15 @@
   network/plugin/credential caches** — they are pure `NuGet.Frameworks` / item math.
 - So the restore caches are **dormant for the entire build phase**, and resetting them is correctness-safe **any
   time after `RestoreTask` finishes**.
-- **The catch:** `dotnet build` runs restore and build as **two submissions inside one
-  `BuildManager.BeginBuild`/`EndBuild` session**, and `RegisteredTaskObjectLifetime.Build` disposes only at
-  `EndBuild`. So the current `RegisterTaskObject(..., Build, ...)` cleanup fires **after the whole build**, not
-  between restore and build — holding plugin processes + sockets idle through the (possibly long) compile phase.
+- `dotnet build` runs restore and build as **two submissions inside one `BuildManager.BeginBuild`/`EndBuild`
+  session**, and `RegisteredTaskObjectLifetime.Build` disposes only at `EndBuild`. So the current
+  `RegisterTaskObject(..., Build, ...)` cleanup fires **at the end of the whole build**.
+- **This is exactly parity** with the previous behavior. Before, the build process **died after each build**, so it
+  held the plugin processes, sockets, and every other piece of state from restore *through the entire build* and
+  only reclaimed them at process exit — i.e. at the same point `EndBuild` represents. **Freeing plugins after the
+  build is therefore sufficient** for a reused host to match the old "fresh process per build" semantics. Tearing
+  down earlier (at the end of the Restore submission) is an *optional, beyond-parity* optimization, not a
+  requirement.
 
 ## The execution model (verified against MSBuild source)
 
@@ -52,15 +57,19 @@ gather the graph on worker nodes; the consolidated restore happens once. So for 
 
 ## Recommendation
 
-| Hook | Fires | Pro / Con |
-| --- | --- | --- |
-| `RegisterTaskObject(…, Build)` (current) | at `EndBuild` — after the **whole build** | Simplest; one teardown per invocation. **Con:** in `dotnet build`, plugin processes + sockets stay alive idle through the entire compile phase (e.g. all of OrchardCore's build). |
-| Target with `AfterTargets="Restore"` (gated `Condition="'$(MSBuildIsRestoring)'=='true'"`) that runs the teardown | at the **end of the Restore submission**, right after `RestoreTask`, before the build/compile phase | Frees plugins/sockets as soon as restore is done. Runs on the entry node where the caches live. **Con:** if the same process restores again later it re-spawns plugins (cheap, lazy). |
-| End of `RestoreTask.Execute()` itself | immediately after the restore completes (in-proc) | Most direct, no extra target. Same trade-off as above; must be gated/opt-in so a `dotnet build` that immediately needs the caches again isn't penalized (it doesn't — build phase doesn't use them). |
+The goal is **parity** with the old "process dies after each build" model, which held all state from restore
+through the whole build and released it at process exit. The hook that matches that point is end-of-build.
 
-**Guidance:** for a reused host, prefer tearing down **at the end of the Restore submission** (an
-`AfterTargets="Restore"` cleanup target, or at the tail of `RestoreTask.Execute`) so plugin processes and sockets
-are released before the long build/compile phase — they are provably unused after `RestoreTask`. Keep
-`RegisterTaskObject(Build)` as the backstop that also covers the `dotnet restore`-only path (where it already
-coincides with end-of-restore) and anything that must survive to `EndBuild`. Either way, correctness is identical;
-the choice is purely about how long idle plugin/socket resources are pinned during the build phase.
+| Hook | Fires | Parity? |
+| --- | --- | --- |
+| `RegisterTaskObject(…, Build)` (current, **recommended**) | at `EndBuild` — after the **whole build**, the same point the old process exited | **Exact parity.** Simplest; one teardown per invocation. Covers the `dotnet restore`-only path too (there end-of-restore == `EndBuild`). |
+| Target with `AfterTargets="Restore"` (gated `Condition="'$(MSBuildIsRestoring)'=='true'"`) | at the **end of the Restore submission**, before the build/compile phase | Beyond parity — releases plugins/sockets *earlier* than the old process did. Optional optimization, not required; a later restore in the same process re-spawns plugins (cheap, lazy). |
+| End of `RestoreTask.Execute()` itself | immediately after restore completes (in-proc) | Same as above — beyond parity. |
+
+**Guidance:** **freeing plugins (and the other restore caches) after the build is sufficient** and is the
+parity-preserving choice, so keep the current `RegisterTaskObject(…, Build)` teardown at `EndBuild`. The old
+process held those plugin processes/sockets idle through the entire build anyway, so holding them until `EndBuild`
+matches the previous behavior exactly — no earlier teardown is needed. The `AfterTargets="Restore"` hook is only
+worth considering as a *separate, opt-in optimization* if profiling shows idle plugin/socket retention during the
+compile phase is a real cost; it is a behavior change beyond parity, not part of achieving it.
+
