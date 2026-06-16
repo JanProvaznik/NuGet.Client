@@ -41,7 +41,19 @@ namespace NuGet.Commands
         private readonly TaskResultCache<LibraryRange, LibraryIdentity> _libraryMatchCache = new();
 
         // Limiting concurrent requests to limit the amount of files open at a time.
-        private readonly static SemaphoreSlim _throttle = GetThrottleSemaphoreSlim(EnvironmentVariableWrapper.Instance);
+        private static SemaphoreSlim _throttle = GetThrottleSemaphoreSlim(EnvironmentVariableWrapper.Instance);
+
+        /// <summary>
+        /// Recreates the shared concurrency throttle from the current environment (<c>NUGET_CONCURRENCY_LIMIT</c>),
+        /// disposing the previous one. Intended for a host that reuses the process across builds; the caller must
+        /// ensure no restore is in flight.
+        /// </summary>
+        public static void ResetThrottle()
+        {
+            SemaphoreSlim previous = Interlocked.Exchange(ref _throttle, GetThrottleSemaphoreSlim(EnvironmentVariableWrapper.Instance));
+            previous?.Dispose();
+        }
+
         internal static SemaphoreSlim GetThrottleSemaphoreSlim(IEnvironmentVariableReader env)
         {
             // Determine default concurrency limit based on operating system constraints.
