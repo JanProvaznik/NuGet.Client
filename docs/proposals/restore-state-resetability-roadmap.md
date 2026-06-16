@@ -69,6 +69,17 @@ Gating: all reset behavior is **off by default**, opt-in via the `ResetProcessSt
 or `NUGET_RESTORE_RESET_PROCESS_STATE` env var. Classic single-shot `dotnet build` and any VS-hosted path are
 unaffected. **No reflection** anywhere (repo guideline).
 
+**Cross-compilation / unification note.** Migrating env caches onto the single `NuGetTraits` (in NuGet.Common)
+funnels 6 independent per-type caches across 4 assemblies (`NuGetFeatureFlags`/`NuGetTestMode`/`PackageIdValidator`
+in NuGet.Protocol, `PreviewFeatureSettings` in NuGet.Credentials, `ConcurrencyUtilities` in NuGet.Common,
+`DependencyGraphSpec` in NuGet.ProjectModel) into one instance — intentional, and semantically safe because they all
+read the same env vars. This is **not** a shared-compilation collapse: the only env-reading `build/Shared` file,
+`NuGetFeatureFlags.cs`, is `<Compile>`'d into just one product assembly (NuGet.Protocol), so no multiple live copies
+were merged. The heavily cross-compiled shared files (`TaskResult.cs` ×11, `SimplePool`/`StringBuilderPool` ×6) hold
+no env/per-build state (completed `Task`s, pools) and are deliberately left as independent per-assembly copies.
+(`NuGetTestMode.Enabled` only *seeds* from `NuGetTraits` at its static ctor and keeps its own snapshot — a benign,
+test-only residual.)
+
 ## 4. Curated reset inventory (what we reset vs. deliberately leave)
 
 **Dispose** (live OS resources / background work): `PluginManager` (plugin **processes**, keep-alive **timers**,
