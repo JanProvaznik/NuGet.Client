@@ -32,6 +32,9 @@ namespace NuGet.Common
                 env.GetEnvironmentVariable("NUGET_USE_SYSTEM_TEXT_JSON_DESERIALIZATION"), "true", StringComparison.OrdinalIgnoreCase);
 
             TestModeEnabled = bool.TryParse(env.GetEnvironmentVariable("NuGetTestModeEnabled"), out bool testMode) && testMode;
+
+            PackageIdValidationDisabled = string.Equals(
+                env.GetEnvironmentVariable("NUGET_DISABLE_PACKAGEID_VALIDATION"), bool.TrueString, StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>Env: <c>NUGET_USE_SYSTEM_TEXT_JSON_DESERIALIZATION</c>.</summary>
@@ -39,6 +42,9 @@ namespace NuGet.Common
 
         /// <summary>Env: <c>NuGetTestModeEnabled</c>.</summary>
         public bool TestModeEnabled { get; }
+
+        /// <summary>Env: <c>NUGET_DISABLE_PACKAGEID_VALIDATION</c>.</summary>
+        public bool PackageIdValidationDisabled { get; }
 
         /// <summary>Recreate the shared <see cref="Instance" /> from the current environment.</summary>
         public static void UpdateFromEnvironment() => UpdateFromEnvironment(EnvironmentVariableWrapper.Instance);
