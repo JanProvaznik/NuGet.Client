@@ -38,8 +38,35 @@ namespace NuGet.Credentials
                         providers: providers,
                         nonInteractive: nonInteractive,
                         handlesDefaultCredentials: PreviewFeatureSettings.DefaultCredentialsAfterCredentialProviders));
+
+                // Remember that this utility - and not an external owner such as Visual Studio - created the
+                // credential service, so that ResetDefaultCredentialService only tears down what it owns.
+                _credentialServiceCreatedHere = true;
             }
         }
+
+        /// <summary>
+        /// Resets the credential service and its delegating logger that <see cref="SetupDefaultCredentialService" />
+        /// previously created, so a process reused across builds behaves as if it had just started.
+        /// </summary>
+        /// <remarks>
+        /// This only tears down a credential service that this utility created. If an external owner (for
+        /// example Visual Studio) set <see cref="HttpHandlerResourceV3.CredentialService" />, it is left intact.
+        /// The credential service transitively owns the secure-plugin credential providers, so callers should
+        /// reset the plugin manager (<c>PluginManager.ResetSharedInstance</c>) as part of the same teardown.
+        /// </remarks>
+        public static void ResetDefaultCredentialService()
+        {
+            if (_credentialServiceCreatedHere)
+            {
+                HttpHandlerResourceV3.CredentialService = null;
+                _credentialServiceCreatedHere = false;
+            }
+
+            DelegatingLogger = null;
+        }
+
+        private static bool _credentialServiceCreatedHere;
 
         /// <summary>
         /// Update the delegating logger for the credential service.
