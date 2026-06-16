@@ -15,7 +15,8 @@ environment/path/throttle caches that freeze a value on first use and are not ye
 hold per-build *correctness* state that silently corrupts a later build's result; they would at most carry a stale
 *environment* value (e.g. a temp path or concurrency limit) if the environment changed *between* builds in one
 process. Every one has an obvious fix (route through the resettable `NuGetTraits` / reset hook), and all are listed
-below.
+below. Event subscriptions (the double-registration vector) are audited separately in §D: restore is
+**publish-only** for every process-global event, so that vector does not exist on the restore path.
 
 ## Methodology
 
@@ -27,7 +28,9 @@ verdict by its kind (`const`/`readonly`/mutable/`Lazy`/`[ThreadStatic]`), its de
 (immutable / comparer / stateless-helper / collection / pool / live-resource), whether it is *written* on a
 reachable path, and a cross-reference against the `EnvStaticsAnalyzer` env-cache set and the curated set of types
 the end-of-build cleanup resets. Anything a rule could not prove safe falls into a review bucket and is
-hand-adjudicated below — nothing is hidden.
+hand-adjudicated below — nothing is hidden. Static **events** are analyzed separately from static fields/properties:
+the analyzer distinguishes `+=` (subscribe), `-=` (unsubscribe), and raise via `IEventAssignmentOperation.Adds`, so
+only a true subscription counts toward the double-registration risk (§D).
 
 ## Verdict summary (1357 members)
 
@@ -97,7 +100,7 @@ at restore start. None affects package-resolution correctness; they affect paths
 
 | Member(s) | What it is | Verdict |
 | --- | --- | --- |
-| `CommandsEventSource` / `CommonEventSource` / `ConfigurationEventSource` `.Instance` | ETW `EventSource` | **Process-lifetime by design.** Stateless diagnostics; disposing would be wrong. No per-build state. |
+| `CommandsEventSource` / `CommonEventSource` / `ConfigurationEventSource` `.Instance` | ETW `EventSource` singleton | **Process-lifetime by design, created once.** See §D — restore is publish-only (`WriteEvent`); it never recreates the singleton nor attaches an `EventListener`, so there is no double-registration. |
 | `TaskResult.True/False/Zero/One`, `NullTaskResult.Instance` | cached **completed** `Task<T>` | **Immutable.** A completed task holds no OS resource (matched only because the type is `Task<T>`). |
 | `ConcurrencyUtilities.PerFileLock` (`KeyedLock`) | process-wide file-lock coordinator | **Correct to share;** empty between uses; it is the cross-build file-lock primitive. |
 | `CredentialService.ProviderSemaphore` (`Semaphore`) | gate around credential providers | released after use; reuse is correct. |
@@ -128,12 +131,45 @@ as the one explicit follow-up in the roadmap (dispose to release sockets).
 | `ConcurrencyUtilities._basePath` (`string?`) | **Minor gap** — second-order temp-path cache; listed under the env gaps (A). |
 | `HttpSourceResourceProvider.Throttle` (`IThrottle?`) | **Minor gap** — a settable global request throttle a host may set per build; could carry over to a later build that does not set it. Fix: set/reset per build. |
 
+### D. Event subscriptions & double-registration
+
+Static **state** is only half the story: a static/long-lived **event** that restore subscribes to with `+=` on
+each invocation, without a matching `-=`, would accumulate duplicate handlers in a reused process — each handler
+then fires N times, pins the subscriber (and its object graph) in memory, and can change behavior. This is a real
+leak class, so it was audited explicitly (the analyzer records event operations and distinguishes `+=` /
+`-=` / raise via `IEventAssignmentOperation.Adds`).
+
+**Result: zero static-event subscriptions and zero `AppDomain` handler registrations are reachable from
+`dotnet restore`.** Specifically:
+
+- **NuGet's own static events** — `ProtocolDiagnostics.HttpEvent` / `ResourceEvent` / `NupkgCopiedEvent` /
+  `ServiceIndexEntryEvent`. On the restore path only the **publisher** (`ProtocolDiagnostics.RaiseEvent` →
+  `evt?.Invoke(...)`) is reachable. The sole subscriber, `PackageSourceTelemetry` in `NuGet.VisualStudio.Common`,
+  is Visual-Studio-only (not on the `dotnet restore` path) **and** pairs every `+=` with a `-=` in its `Dispose`.
+  So restore **adds no handler** — these event fields keep whatever handler set the host had (none, in a
+  restore-only host), and a reused restore host accumulates nothing. (An earlier draft mislabeled these as
+  "subscriptions"; they are raises. The analyzer was corrected to separate raise/subscribe/unsubscribe, which is
+  why the static-event-subscription sink count is now 0.)
+- **ETW `EventSource`s** — `CommonEventSource` / `CommandsEventSource` / `ConfigurationEventSource` are
+  `static readonly … Instance = new()` singletons, **created exactly once** at type init. Restore only calls
+  `WriteEvent` (publish). It never constructs a second instance and never attaches an `EventListener` /
+  `EnableEvents`, so there is no second registration.
+- **The only `+=` reachable from restore** are `process.Exited += OnProcessExited` on **per-plugin `Process`
+  objects** (`PluginProcess`, `MonitorNuGetProcessExitRequestHandler`). Those are instance subscriptions on
+  objects **owned by `PluginManager`**, are paired with `-=` in their handlers, and are torn down when the plugin
+  manager is reset/disposed (**ResetByCleanup** — which also kills the plugin processes). No process-global event
+  is involved.
+
+Conclusion for events: restore is **publish-only** with respect to every process-global event, so the
+double-registration vector does not exist on the restore path; no reset of event handler lists is required.
+
 ## Conclusion — what "full resetability" requires
 
 After the stacked PRs, the reachable static surface decomposes into: **1346 members that provably cannot leak
 per-build correctness state** (immutable / deterministic / input-keyed / thread-scratch / process-lifetime
 primitive / already reset), and a **small, fully enumerated residual of ~11 environment/path/throttle caches**
-plus the **one HttpSource handler-cache disposal** follow-up.
+plus the **one HttpSource handler-cache disposal** follow-up. **Event subscriptions are clean** — restore is
+publish-only for every process-global event (§D), so no event-handler reset is needed.
 
 To reach *true* zero, do exactly this (all from the audit above, none structural):
 
