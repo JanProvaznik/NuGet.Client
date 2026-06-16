@@ -132,6 +132,17 @@ namespace NuGet.Build.Tasks
         /// </summary>
         public string EmbedFilesInBinlog { get; set; }
 
+        /// <summary>
+        /// When <see langword="true" />, restore registers an end-of-build cleanup with MSBuild
+        /// (via <see cref="Microsoft.Build.Framework.IBuildEngine4.RegisterTaskObject" />) that tears down the
+        /// process-global state restore created - cached plugin processes and their timers, the credential
+        /// service, and the proxy cache - so a host process reused across builds (MSBuild Server or
+        /// multithreaded MSBuild) behaves as if it had started fresh for the next build. Defaults to
+        /// <see langword="false" />; can also be enabled with the <c>NUGET_RESTORE_RESET_PROCESS_STATE</c>
+        /// environment variable.
+        /// </summary>
+        public bool ResetProcessStateAfterBuild { get; set; }
+
         public override bool Execute()
         {
             var debugRestoreTask = _environmentVariableReader.GetEnvironmentVariable("DEBUG_RESTORE_TASK");
@@ -144,6 +155,13 @@ namespace NuGet.Build.Tasks
             var log = new MSBuildLogger(Log);
 
             NuGet.Common.Migrations.MigrationRunner.Run();
+
+            // In a host process that is reused across builds, tie the lifetime of restore's process-global
+            // state to the build (instead of relying on process exit) so it does not leak into the next build.
+            if (ShouldResetProcessStateAfterBuild() && BuildEngine is IBuildEngine4 buildEngine4)
+            {
+                RestoreProcessStateCleanup.EnsureRegistered(buildEngine4);
+            }
 
             try
             {
@@ -218,6 +236,19 @@ namespace NuGet.Build.Tasks
         public void Cancel()
         {
             _cts.Cancel();
+        }
+
+        private bool ShouldResetProcessStateAfterBuild()
+        {
+            if (ResetProcessStateAfterBuild)
+            {
+                return true;
+            }
+
+            string value = _environmentVariableReader.GetEnvironmentVariable("NUGET_RESTORE_RESET_PROCESS_STATE");
+
+            return !string.IsNullOrEmpty(value) &&
+                (value.Equals(bool.TrueString, StringComparison.OrdinalIgnoreCase) || value == "1");
         }
 
         public void Dispose()

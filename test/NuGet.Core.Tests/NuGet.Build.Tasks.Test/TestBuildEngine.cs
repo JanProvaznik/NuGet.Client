@@ -24,6 +24,13 @@ namespace NuGet.Build.Tasks.Test
 
         private readonly IReadOnlyDictionary<string, string> _globalProperties;
 
+        private readonly Dictionary<(object Key, RegisteredTaskObjectLifetime Lifetime), object> _registeredTaskObjects = new();
+
+        /// <summary>
+        /// The objects registered via <see cref="RegisterTaskObject" />, for test assertions.
+        /// </summary>
+        public IReadOnlyDictionary<(object Key, RegisteredTaskObjectLifetime Lifetime), object> RegisteredTaskObjects => _registeredTaskObjects;
+
         public TestBuildEngine()
         {
             _globalProperties = new Dictionary<string, string>();
@@ -53,7 +60,8 @@ namespace NuGet.Build.Tasks.Test
 
         public IReadOnlyDictionary<string, string> GetGlobalProperties() => _globalProperties;
 
-        public object GetRegisteredTaskObject(object key, RegisteredTaskObjectLifetime lifetime) => throw new NotImplementedException();
+        public object GetRegisteredTaskObject(object key, RegisteredTaskObjectLifetime lifetime)
+            => _registeredTaskObjects.TryGetValue((key, lifetime), out object value) ? value : null;
 
         public void LogCustomEvent(CustomBuildEventArgs e)
         {
@@ -119,9 +127,19 @@ namespace NuGet.Build.Tasks.Test
 
         public void Reacquire() => throw new NotImplementedException();
 
-        public void RegisterTaskObject(object key, object obj, RegisteredTaskObjectLifetime lifetime, bool allowEarlyCollection) => throw new NotImplementedException();
+        public void RegisterTaskObject(object key, object obj, RegisteredTaskObjectLifetime lifetime, bool allowEarlyCollection)
+            => _registeredTaskObjects[(key, lifetime)] = obj;
 
-        public object UnregisterTaskObject(object key, RegisteredTaskObjectLifetime lifetime) => throw new NotImplementedException();
+        public object UnregisterTaskObject(object key, RegisteredTaskObjectLifetime lifetime)
+        {
+            if (_registeredTaskObjects.TryGetValue((key, lifetime), out object value))
+            {
+                _registeredTaskObjects.Remove((key, lifetime));
+                return value;
+            }
+
+            return null;
+        }
 
         public void Yield() => throw new NotImplementedException();
     }
