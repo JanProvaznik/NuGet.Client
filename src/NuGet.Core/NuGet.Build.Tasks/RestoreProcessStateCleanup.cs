@@ -4,8 +4,10 @@
 using System;
 using System.Diagnostics;
 using Microsoft.Build.Framework;
+using NuGet.Commands;
 using NuGet.Configuration;
 using NuGet.Credentials;
+using NuGet.Protocol;
 using NuGet.Protocol.Plugins;
 
 namespace NuGet.Build.Tasks
@@ -82,10 +84,25 @@ namespace NuGet.Build.Tasks
             // environment on the next build (see the NuGetTraits proposal).
             TryReset(static () => NuGet.Common.NuGetTraits.UpdateFromEnvironment());
 
-            // NOTE (follow-ups, intentionally not reset here):
-            //  - The per-source HttpSource handler cache lives on provider instances held by the static
-            //    Repository provider factory; disposing it requires provider-factory plumbing. A cached
-            //    HttpClient is also benign to reuse across builds.
+            // Environment-derived path caches: home directory, NuGet temp directory, resolved folder paths, and
+            // the lock-file base path (which derives from the temp directory).
+            TryReset(static () => NuGet.Common.NuGetEnvironment.ResetCache());
+            TryReset(static () => NuGet.Common.ConcurrencyUtilities.ResetCache());
+
+            // Concurrency throttle sized from NUGET_CONCURRENCY_LIMIT: recreate from the current environment.
+            TryReset(static () => SourceRepositoryDependencyProvider.ResetThrottle());
+
+            // Per-process HTTP request throttle: clear any throttle a host set for the previous build.
+            TryReset(static () => HttpSourceResourceProvider.Throttle = null);
+
+            // NOTE (intentionally not reset here):
+            //  - The per-source HttpSource handler cache is owned by the per-restore CachingSourceProvider
+            //    (RestoreArgs.CachingSourceProvider), not a static, so it is reclaimed by GC after the restore;
+            //    promptly disposing those sockets is a separate restore-flow optimization, not static state.
+            //  - ExceptionLogger now reads NUGET_SHOW_STACK live from NuGetTraits, so it needs no reset here.
+            //  - PluginLogger (NUGET_PLUGIN_ENABLE_LOG) only allocates a writer in the rare debug-logging case and
+            //    holds nothing otherwise; X509ChainBuildPolicyFactory caches an experimental signing-retry policy
+            //    with negligible staleness impact. Both are left as documented low-value follow-ups.
             //  - [ThreadStatic] resolver scratch buffers are per-thread and cleared on use; they only pin
             //    memory on pooled threads.
         }

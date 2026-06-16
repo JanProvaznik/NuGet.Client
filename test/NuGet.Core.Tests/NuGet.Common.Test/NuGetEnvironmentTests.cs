@@ -10,6 +10,19 @@ namespace NuGet.Common.Test
 {
     public class NuGetEnvironmentTests
     {
+        [Fact]
+        public void ResetCache_RecomputesFolderPathsAndDoesNotThrow()
+        {
+            string before = NuGetEnvironment.GetFolderPath(NuGetFolderPath.UserSettingsDirectory);
+
+            NuGetEnvironment.ResetCache();
+
+            string after = NuGetEnvironment.GetFolderPath(NuGetFolderPath.UserSettingsDirectory);
+
+            // Same environment -> identical recomputed value, and the cache is usable again after a reset.
+            Assert.Equal(before, after);
+        }
+
         [PlatformFact(Platform.Linux)]
         public void GetFolderPath_Temp_Success()
         {

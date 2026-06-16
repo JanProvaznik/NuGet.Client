@@ -131,5 +131,23 @@ namespace NuGet.Build.Tasks.Test
             var after = NuGet.Protocol.Plugins.PluginManager.Instance;
             after.Should().NotBeSameAs(before);
         }
+
+        [Fact]
+        public void Reset_ClearsHttpSourceResourceProviderThrottle()
+        {
+            IThrottle original = HttpSourceResourceProvider.Throttle;
+            try
+            {
+                HttpSourceResourceProvider.Throttle = SemaphoreSlimThrottle.CreateSemaphoreThrottle(1);
+
+                RestoreProcessStateCleanup.Reset();
+
+                HttpSourceResourceProvider.Throttle.Should().BeNull();
+            }
+            finally
+            {
+                HttpSourceResourceProvider.Throttle = original;
+            }
+        }
     }
 }
