@@ -8,6 +8,8 @@ NuGet.Common.NuGetTraits.PackageIdValidationDisabled.get -> bool
 NuGet.Common.NuGetTraits.TestModeEnabled.get -> bool
 NuGet.Common.NuGetTraits.UseLegacyDependencyGraphSpecHashFunction.get -> bool
 NuGet.Common.NuGetTraits.UseSystemTextJsonDeserialization.get -> bool
+static NuGet.Common.ConcurrencyUtilities.ResetCache() -> void
+static NuGet.Common.NuGetEnvironment.ResetCache() -> void
 static NuGet.Common.NuGetTraits.Instance.get -> NuGet.Common.NuGetTraits!
 static NuGet.Common.NuGetTraits.UpdateFromEnvironment() -> void
 static NuGet.Common.NuGetTraits.UpdateFromEnvironment(NuGet.Common.IEnvironmentVariableReader! env) -> void

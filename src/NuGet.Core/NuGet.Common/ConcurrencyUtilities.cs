@@ -237,6 +237,16 @@ namespace NuGet.Common
             }
         }
 
+        /// <summary>
+        /// Clears the cached lock-file base path (derived from the NuGet temp directory) so it is recomputed from
+        /// the current environment on next use. Intended for hosts that reuse the process across builds; callers
+        /// should also reset <see cref="NuGetEnvironment.ResetCache" />, which this value derives from.
+        /// </summary>
+        public static void ResetCache()
+        {
+            _basePath = null;
+        }
+
         private static string FileLockPath(string filePath)
         {
             // In case the directory was cleaned up, we can choose to fix it (at a cost of another roundtrip to disk
