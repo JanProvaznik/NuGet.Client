@@ -24,6 +24,9 @@ namespace NuGet.ProjectModel
         /// </summary>
         private static bool? UseLegacyHashFunction;
 
+        /// <summary>Clears the cached legacy-hash env flag so it is re-read on the next construction.</summary>
+        internal static void ResetCache() => UseLegacyHashFunction = null;
+
         private const string DGSpecFileNameExtension = "{0}.nuget.dgspec.json";
 
         private readonly SortedSet<string> _restore = new(PathUtility.GetStringComparerBasedOnOS());

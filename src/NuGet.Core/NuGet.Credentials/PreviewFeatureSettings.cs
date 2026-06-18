@@ -26,6 +26,10 @@ namespace NuGet.Credentials
         public static bool DefaultCredentialsAfterCredentialProviders { get; set; }
             = GetFlagFromEnvironmentVariable(DefaultCredentialsAfterCredentialProvidersEnvironmentVariableName);
 
+        /// <summary>Re-reads <c>NUGET_CREDENTIAL_PROVIDER_OVERRIDE_DEFAULT</c> from the current environment.</summary>
+        internal static void ResetCache()
+            => DefaultCredentialsAfterCredentialProviders = GetFlagFromEnvironmentVariable(DefaultCredentialsAfterCredentialProvidersEnvironmentVariableName);
+
         private static bool GetFlagFromEnvironmentVariable(string variableName)
         {
             bool flag;

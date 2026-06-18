@@ -21,6 +21,9 @@ namespace NuGet.Build.Tasks
         {
             NuGet.Common.NuGetCommonProcessState.ResetEnvironmentCaches();
             NuGet.Protocol.NuGetProtocolProcessState.ResetEnvironmentCaches();
+            NuGet.Credentials.NuGetCredentialsProcessState.ResetEnvironmentCaches();
+            NuGet.ProjectModel.NuGetProjectModelProcessState.ResetEnvironmentCaches();
+            NuGet.Commands.NuGetCommandsProcessState.ResetEnvironmentCaches();
 
             return true;
         }

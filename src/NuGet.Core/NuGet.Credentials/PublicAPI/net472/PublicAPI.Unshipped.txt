@@ -1,1 +1,3 @@
 #nullable enable
+NuGet.Credentials.NuGetCredentialsProcessState
+static NuGet.Credentials.NuGetCredentialsProcessState.ResetEnvironmentCaches() -> void

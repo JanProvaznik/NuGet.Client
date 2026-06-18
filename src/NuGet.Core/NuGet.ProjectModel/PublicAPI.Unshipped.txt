@@ -1,3 +1,5 @@
 #nullable enable
 NuGet.ProjectModel.ProjectRestoreMetadata.RestoreDoNotWriteDependencyGraphSpec.get -> bool
 NuGet.ProjectModel.ProjectRestoreMetadata.RestoreDoNotWriteDependencyGraphSpec.set -> void
+NuGet.ProjectModel.NuGetProjectModelProcessState
+static NuGet.ProjectModel.NuGetProjectModelProcessState.ResetEnvironmentCaches() -> void

@@ -6,3 +6,5 @@ NuGet.Commands.Restore.IProject.GetGlobalProperty(string! propertyName) -> strin
 ~static NuGet.Commands.MSBuildRestoreUtility.GetDependencySpec(System.Collections.Generic.IEnumerable<NuGet.Commands.IMSBuildItem> items, bool readOnly, bool collectAdditionalMessages) -> (NuGet.ProjectModel.DependencyGraphSpec, System.Collections.Generic.IReadOnlyList<NuGet.ProjectModel.IAssetsLogMessage>)
 ~NuGet.Commands.RestoreRequest.EnvironmentVariableReader.get -> NuGet.Common.IEnvironmentVariableReader
 ~NuGet.Commands.RestoreRequest.EnvironmentVariableReader.init -> void
+NuGet.Commands.NuGetCommandsProcessState
+static NuGet.Commands.NuGetCommandsProcessState.ResetEnvironmentCaches() -> void
