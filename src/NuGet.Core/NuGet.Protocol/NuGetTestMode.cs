@@ -18,6 +18,9 @@ namespace NuGet.Protocol.Core.Types
 
         public static bool Enabled { get; private set; }
 
+        /// <summary>Re-reads <c>NuGetTestModeEnabled</c> from the current environment.</summary>
+        internal static void ResetCache() => Enabled = FromEnvironmentVariable();
+
         private static bool FromEnvironmentVariable()
         {
 #pragma warning disable RS0030 // Do not use banned APIs
