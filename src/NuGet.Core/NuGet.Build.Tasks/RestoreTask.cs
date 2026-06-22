@@ -145,14 +145,10 @@ namespace NuGet.Build.Tasks
 
             NuGet.Common.Migrations.MigrationRunner.Run();
 
-            // In a host that reuses the process across builds (opt-in), re-read environment-derived caches at the
-            // start of this restore so it observes the current environment, and tear down plugin processes at the
-            // end so they do not outlive the build (as they would have when the process exited per build).
-            bool resetProcessState = ShouldResetProcessState();
-            if (resetProcessState)
-            {
-                NuGet.Common.NuGetProcessState.Reset(NuGet.Common.NuGetProcessState.ResetKey.StartBuild);
-            }
+            // Re-read environment-derived caches at the start of this restore so a reused process observes the current
+            // environment. This normally happens in the first restore task on each node (GetRestoreProjectStyleTask);
+            // the call here is a guarded backstop that no-ops if that task already reset this node for this build.
+            BuildTasksUtility.ResetProcessStateOncePerBuild(BuildEngine);
 
             try
             {
@@ -171,18 +167,10 @@ namespace NuGet.Build.Tasks
             }
             finally
             {
-                if (resetProcessState)
-                {
-                    NuGet.Common.NuGetProcessState.Reset(NuGet.Common.NuGetProcessState.ResetKey.EndRestore);
-                }
+                // End of restore on the entry node: tear down plugin processes that the per-build process exit used to
+                // reclaim. RestoreTask runs once per restore, so this needs no parallel-invocation guard.
+                NuGet.Common.NuGetProcessState.Reset(NuGet.Common.NuGetProcessState.ResetKey.EndRestore);
             }
-        }
-
-        private bool ShouldResetProcessState()
-        {
-            string value = _environmentVariableReader.GetEnvironmentVariable("NUGET_RESTORE_RESET_PROCESS_STATE");
-            return !string.IsNullOrEmpty(value) &&
-                (value.Equals(bool.TrueString, StringComparison.OrdinalIgnoreCase) || value == "1");
         }
 
         private async Task<bool> ExecuteAsync(Common.ILogger log)

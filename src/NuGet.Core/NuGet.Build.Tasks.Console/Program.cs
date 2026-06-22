@@ -62,12 +62,8 @@ namespace NuGet.Build.Tasks.Console
 
                 // This out-of-proc static-graph restore process is spawned fresh per restore (it is one-shot), so
                 // there is no stale state to clear today; this is the correct place for the start-of-restore reset
-                // and keeps it symmetric with the in-proc RestoreTask should the process ever be reused.
-                if (string.Equals(environmentVariableReader.GetEnvironmentVariable("NUGET_RESTORE_RESET_PROCESS_STATE"), bool.TrueString, StringComparison.OrdinalIgnoreCase)
-                    || environmentVariableReader.GetEnvironmentVariable("NUGET_RESTORE_RESET_PROCESS_STATE") == "1")
-                {
-                    NuGet.Common.NuGetProcessState.Reset(NuGet.Common.NuGetProcessState.ResetKey.StartBuild);
-                }
+                // and keeps it symmetric with the in-proc restore tasks should the process ever be reused.
+                NuGet.Common.NuGetProcessState.Reset(NuGet.Common.NuGetProcessState.ResetKey.StartBuild);
 
                 // Parse command-line arguments
                 if (!TryParseArguments(args, () => System.Console.OpenStandardInput(), System.Console.Error, out (Dictionary<string, string> Options, FileInfo MSBuildExeFilePath, string EntryProjectFilePath, Dictionary<string, string> MSBuildGlobalProperties) arguments))
