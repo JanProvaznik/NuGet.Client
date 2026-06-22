@@ -14,7 +14,7 @@ namespace NuGet.Credentials
     {
         static PreviewFeatureSettings()
         {
-            NuGet.Common.NuGetProcessState.RegisterResetAction(NuGet.Common.NuGetProcessState.ResetKey.StartBuild, ResetCache);
+            NuGet.Common.NuGetProcessState.RegisterResetAction(NuGet.Common.NuGetProcessState.ResetKey.StartRestore, ResetCache);
         }
 
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member

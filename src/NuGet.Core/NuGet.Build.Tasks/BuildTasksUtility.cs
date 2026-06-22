@@ -41,7 +41,7 @@ namespace NuGet.Build.Tasks
         private static readonly object ProcessStateResetSentinelKey = new object();
 
         /// <summary>
-        /// Re-reads NuGet's environment-derived process state (<see cref="NuGetProcessState.ResetKey.StartBuild" />)
+        /// Re-reads NuGet's environment-derived process state (<see cref="NuGetProcessState.ResetKey.StartRestore" />)
         /// at most once per build on each MSBuild node.
         /// </summary>
         /// <remarks>
@@ -63,14 +63,14 @@ namespace NuGet.Build.Tasks
                         return;
                     }
 
-                    NuGetProcessState.Reset(NuGetProcessState.ResetKey.StartBuild);
+                    NuGetProcessState.Reset(NuGetProcessState.ResetKey.StartRestore);
 
                     buildEngine4.RegisterTaskObject(ProcessStateResetSentinelKey, ProcessStateResetSentinelKey, RegisteredTaskObjectLifetime.Build, allowEarlyCollection: false);
                 }
             }
             else
             {
-                NuGetProcessState.Reset(NuGetProcessState.ResetKey.StartBuild);
+                NuGetProcessState.Reset(NuGetProcessState.ResetKey.StartRestore);
             }
         }
 

@@ -19,10 +19,10 @@ namespace NuGet.Common
         public enum ResetKey
         {
             /// <summary>
-            /// State that must be refreshed at the start of a build/restore - chiefly caches derived from
+            /// State that must be refreshed at the start of a restore - chiefly caches derived from
             /// environment variables, which may have changed since a previous build in a reused process.
             /// </summary>
-            StartBuild,
+            StartRestore,
 
             /// <summary>
             /// State that must be torn down at the end of a restore - chiefly live OS resources (such as plugin
@@ -38,7 +38,7 @@ namespace NuGet.Common
         /// Registers a reset action for <paramref name="key" />. Actions accumulate (a keyed list), so each
         /// contributor registers once - typically from a type's static constructor.
         /// </summary>
-        /// <param name="key">The reset point, <see cref="ResetKey.StartBuild" /> or <see cref="ResetKey.EndRestore" />.</param>
+        /// <param name="key">The reset point, <see cref="ResetKey.StartRestore" /> or <see cref="ResetKey.EndRestore" />.</param>
         /// <param name="resetAction">The action that re-reads / clears / tears down the state.</param>
         public static void RegisterResetAction(ResetKey key, Action resetAction)
         {

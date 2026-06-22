@@ -28,7 +28,7 @@ namespace NuGet.Commands
     {
         static SourceRepositoryDependencyProvider()
         {
-            NuGet.Common.NuGetProcessState.RegisterResetAction(NuGet.Common.NuGetProcessState.ResetKey.StartBuild, ResetCache);
+            NuGet.Common.NuGetProcessState.RegisterResetAction(NuGet.Common.NuGetProcessState.ResetKey.StartRestore, ResetCache);
         }
 
         private readonly object _lock = new object();
