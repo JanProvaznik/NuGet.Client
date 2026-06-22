@@ -9,7 +9,7 @@ namespace NuGet.Common
     {
         static ExceptionLogger()
         {
-            NuGetProcessState.RegisterResetAction(NuGetProcessState.StartBuild, ResetInstance);
+            NuGetProcessState.RegisterResetAction(NuGetProcessState.ResetKey.StartBuild, ResetInstance);
         }
 
         public ExceptionLogger(IEnvironmentVariableReader reader)

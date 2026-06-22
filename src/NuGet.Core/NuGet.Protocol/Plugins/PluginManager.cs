@@ -28,7 +28,7 @@ namespace NuGet.Protocol.Plugins
         static PluginManager()
         {
             // The plugin processes must not outlive the build that started them; tear them down at end of restore.
-            NuGet.Common.NuGetProcessState.RegisterResetAction(NuGet.Common.NuGetProcessState.EndRestore, ResetSharedInstance);
+            NuGet.Common.NuGetProcessState.RegisterResetAction(NuGet.Common.NuGetProcessState.ResetKey.EndRestore, ResetSharedInstance);
         }
 
         private static Lazy<IPluginManager> _lazy = new Lazy<IPluginManager>(() => new PluginManager());
@@ -37,7 +37,7 @@ namespace NuGet.Protocol.Plugins
         /// <summary>
         /// Disposes the current shared <see cref="Instance" /> - terminating any running plugin processes and their
         /// idle/keep-alive timers - and resets it so the next access lazily creates a fresh instance. Registered
-        /// under <see cref="NuGet.Common.NuGetProcessState.EndRestore" /> and invoked by restore at the end of a
+        /// under <see cref="NuGet.Common.NuGetProcessState.ResetKey.EndRestore" /> and invoked by restore at the end of a
         /// restore. No-op when no instance has been created.
         /// </summary>
         private static void ResetSharedInstance()

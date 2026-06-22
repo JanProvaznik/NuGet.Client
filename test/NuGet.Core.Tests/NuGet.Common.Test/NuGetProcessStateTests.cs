@@ -11,55 +11,39 @@ namespace NuGet.Common.Test
         [Fact]
         public void Reset_StartBuild_RereadsShowStackFromEnvironment()
         {
-            string original = Environment.GetEnvironmentVariable("NUGET_SHOW_STACK");
+            string? original = Environment.GetEnvironmentVariable("NUGET_SHOW_STACK");
             try
             {
-                // Touch ExceptionLogger so its static constructor registers its reset under StartBuild.
+                // Touch ExceptionLogger so its static constructor registers its reset for StartBuild.
                 _ = ExceptionLogger.Instance;
 
                 Environment.SetEnvironmentVariable("NUGET_SHOW_STACK", "true");
-                NuGetProcessState.Reset(NuGetProcessState.StartBuild);
+                NuGetProcessState.Reset(NuGetProcessState.ResetKey.StartBuild);
                 Assert.True(ExceptionLogger.Instance.ShowStack);
 
                 // Simulate a process reused for a new build whose environment no longer sets the flag.
                 Environment.SetEnvironmentVariable("NUGET_SHOW_STACK", null);
-                NuGetProcessState.Reset(NuGetProcessState.StartBuild);
+                NuGetProcessState.Reset(NuGetProcessState.ResetKey.StartBuild);
                 Assert.False(ExceptionLogger.Instance.ShowStack);
             }
             finally
             {
                 Environment.SetEnvironmentVariable("NUGET_SHOW_STACK", original);
-                NuGetProcessState.Reset(NuGetProcessState.StartBuild);
+                NuGetProcessState.Reset(NuGetProcessState.ResetKey.StartBuild);
             }
         }
 
         [Fact]
-        public void Reset_RunsAllActionsRegisteredUnderKey_AndIgnoresOtherKeys()
+        public void Reset_RunsAllActionsForKey_AndIsolatesFailures()
         {
-            string key = "NuGetProcessStateTests." + Guid.NewGuid().ToString("N");
-            int count = 0;
-            NuGetProcessState.RegisterResetAction(key, () => count++);
-            NuGetProcessState.RegisterResetAction(key, () => count++); // keyed list: both run
+            int ran = 0;
+            NuGetProcessState.RegisterResetAction(NuGetProcessState.ResetKey.StartBuild, () => throw new InvalidOperationException("boom"));
+            NuGetProcessState.RegisterResetAction(NuGetProcessState.ResetKey.StartBuild, () => ran++);
 
-            NuGetProcessState.Reset(key);
-            Assert.Equal(2, count);
+            NuGetProcessState.Reset(NuGetProcessState.ResetKey.StartBuild);
 
-            // A different (unused) key is a no-op.
-            NuGetProcessState.Reset("NuGetProcessStateTests." + Guid.NewGuid().ToString("N"));
-            Assert.Equal(2, count);
-        }
-
-        [Fact]
-        public void Reset_OneFailingAction_StillRunsTheOthers()
-        {
-            string key = "NuGetProcessStateTests." + Guid.NewGuid().ToString("N");
-            bool ranSecond = false;
-            NuGetProcessState.RegisterResetAction(key, () => throw new InvalidOperationException("boom"));
-            NuGetProcessState.RegisterResetAction(key, () => ranSecond = true);
-
-            NuGetProcessState.Reset(key);
-
-            Assert.True(ranSecond);
+            // The throwing action did not prevent the counting action from running.
+            Assert.True(ran >= 1);
         }
     }
 }

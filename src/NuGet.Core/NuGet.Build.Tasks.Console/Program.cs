@@ -66,7 +66,7 @@ namespace NuGet.Build.Tasks.Console
                 if (string.Equals(environmentVariableReader.GetEnvironmentVariable("NUGET_RESTORE_RESET_PROCESS_STATE"), bool.TrueString, StringComparison.OrdinalIgnoreCase)
                     || environmentVariableReader.GetEnvironmentVariable("NUGET_RESTORE_RESET_PROCESS_STATE") == "1")
                 {
-                    NuGet.Common.NuGetProcessState.Reset(NuGet.Common.NuGetProcessState.StartBuild);
+                    NuGet.Common.NuGetProcessState.Reset(NuGet.Common.NuGetProcessState.ResetKey.StartBuild);
                 }
 
                 // Parse command-line arguments

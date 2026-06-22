@@ -151,7 +151,7 @@ namespace NuGet.Build.Tasks
             bool resetProcessState = ShouldResetProcessState();
             if (resetProcessState)
             {
-                NuGet.Common.NuGetProcessState.Reset(NuGet.Common.NuGetProcessState.StartBuild);
+                NuGet.Common.NuGetProcessState.Reset(NuGet.Common.NuGetProcessState.ResetKey.StartBuild);
             }
 
             try
@@ -173,7 +173,7 @@ namespace NuGet.Build.Tasks
             {
                 if (resetProcessState)
                 {
-                    NuGet.Common.NuGetProcessState.Reset(NuGet.Common.NuGetProcessState.EndRestore);
+                    NuGet.Common.NuGetProcessState.Reset(NuGet.Common.NuGetProcessState.ResetKey.EndRestore);
                 }
             }
         }

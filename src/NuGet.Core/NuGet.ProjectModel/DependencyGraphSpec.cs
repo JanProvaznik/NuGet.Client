@@ -21,7 +21,7 @@ namespace NuGet.ProjectModel
     {
         static DependencyGraphSpec()
         {
-            NuGet.Common.NuGetProcessState.RegisterResetAction(NuGet.Common.NuGetProcessState.StartBuild, ResetCache);
+            NuGet.Common.NuGetProcessState.RegisterResetAction(NuGet.Common.NuGetProcessState.ResetKey.StartBuild, ResetCache);
         }
 
         /// <summary>
