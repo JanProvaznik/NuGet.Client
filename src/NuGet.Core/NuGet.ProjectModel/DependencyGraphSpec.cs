@@ -19,6 +19,11 @@ namespace NuGet.ProjectModel
 {
     public class DependencyGraphSpec
     {
+        static DependencyGraphSpec()
+        {
+            NuGet.Common.NuGetProcessState.RegisterResetAction(NuGet.Common.NuGetProcessState.StartBuild, ResetCache);
+        }
+
         /// <summary>
         /// Allows a user to enable the legacy SHA512 hash function for dgSpec files which is used by no-op.
         /// </summary>

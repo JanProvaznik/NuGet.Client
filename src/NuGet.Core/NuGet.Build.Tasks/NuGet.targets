@@ -188,7 +188,7 @@ Copyright (c) .NET Foundation. All rights reserved.
     ============================================================
   -->
   <Target Name="_NuGetResetProcessState" Condition="'$(RestoreResetProcessState)' == 'true'">
-    <ResetNuGetProcessStateTask />
+    <ResetNuGetProcessStateTask Key="StartBuild" />
   </Target>
 
   <!--
@@ -226,6 +226,9 @@ Copyright (c) .NET Foundation. All rights reserved.
       <Output TaskParameter="ProjectsAlreadyUpToDate" PropertyName="RestoreSkippedCount" />
       <Output TaskParameter="ProjectsAudited" PropertyName="RestoreProjectsAuditedCount" />
     </RestoreTask>
+
+    <!-- Tear down plugin processes at the end of restore so they do not outlive this build. -->
+    <ResetNuGetProcessStateTask Key="EndRestore" Condition="'$(RestoreResetProcessState)' == 'true'" />
   </Target>
 
   <!--

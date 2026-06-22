@@ -12,6 +12,11 @@ namespace NuGet.Protocol
     {
         private const string DisableValidationEnvVar = "NUGET_DISABLE_PACKAGEID_VALIDATION";
 
+        static PackageIdValidator()
+        {
+            NuGetProcessState.RegisterResetAction(NuGetProcessState.StartBuild, ResetCache);
+        }
+
         private static Lazy<bool> IsValidationDisabled = new Lazy<bool>(() =>
             IsPackageIdValidationDisabled(EnvironmentVariableWrapper.Instance));
 

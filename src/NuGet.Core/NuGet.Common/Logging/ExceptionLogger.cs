@@ -7,6 +7,11 @@ namespace NuGet.Common
 {
     public class ExceptionLogger
     {
+        static ExceptionLogger()
+        {
+            NuGetProcessState.RegisterResetAction(NuGetProcessState.StartBuild, ResetInstance);
+        }
+
         public ExceptionLogger(IEnvironmentVariableReader reader)
         {
             // We can cache this value since environment variables should be fixed during a restore. In a host that

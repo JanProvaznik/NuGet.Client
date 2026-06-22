@@ -30,6 +30,11 @@ namespace NuGet.Common
 
         private static readonly ConcurrentDictionary<NuGetFolderPath, string> Cache = new ConcurrentDictionary<NuGetFolderPath, string>();
 
+        static NuGetEnvironment()
+        {
+            NuGetProcessState.RegisterResetAction(NuGetProcessState.StartBuild, ResetEnvironmentCaches);
+        }
+
         /// <summary>
         /// Clears the cached, environment-derived paths (home directory, NuGet temp directory, and resolved
         /// folder paths) so they are recomputed from the current environment on next use. Intended for a host

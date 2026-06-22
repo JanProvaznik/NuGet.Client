@@ -26,6 +26,11 @@ namespace NuGet.Commands
     /// </summary>
     public class SourceRepositoryDependencyProvider : IRemoteDependencyProvider
     {
+        static SourceRepositoryDependencyProvider()
+        {
+            NuGet.Common.NuGetProcessState.RegisterResetAction(NuGet.Common.NuGetProcessState.StartBuild, ResetCache);
+        }
+
         private readonly object _lock = new object();
         private readonly SourceRepository _sourceRepository;
         private readonly ILogger _logger;

@@ -12,6 +12,11 @@ namespace NuGet.Shared
         internal const string UseSystemTextJsonDeserializationSwitchName = "NuGet.UseSystemTextJsonDeserialization";
         internal const string UseSystemTextJsonDeserializationEnvVar = "NUGET_USE_SYSTEM_TEXT_JSON_DESERIALIZATION";
 
+        static NuGetFeatureFlags()
+        {
+            NuGetProcessState.RegisterResetAction(NuGetProcessState.StartBuild, ResetCache);
+        }
+
         private static Lazy<bool> _isSystemTextJsonDeserializationEnabledByEnvironment =
             new Lazy<bool>(() => IsSystemTextJsonDeserializationEnabledByEnvironment(EnvironmentVariableWrapper.Instance));
 

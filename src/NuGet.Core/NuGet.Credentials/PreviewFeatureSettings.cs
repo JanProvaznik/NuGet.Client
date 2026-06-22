@@ -12,6 +12,11 @@ namespace NuGet.Credentials
     /// </summary>
     public static class PreviewFeatureSettings
     {
+        static PreviewFeatureSettings()
+        {
+            NuGet.Common.NuGetProcessState.RegisterResetAction(NuGet.Common.NuGetProcessState.StartBuild, ResetCache);
+        }
+
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         public const string DefaultCredentialsAfterCredentialProvidersEnvironmentVariableName
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member

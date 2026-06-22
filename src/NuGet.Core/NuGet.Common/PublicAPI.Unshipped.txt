@@ -1,5 +1,8 @@
 #nullable enable
 NuGet.Common.NuGetLogCode.NU1512 = 1512 -> NuGet.Common.NuGetLogCode
 NuGet.Common.NuGetLogCode.NU5502 = 5502 -> NuGet.Common.NuGetLogCode
-NuGet.Common.NuGetCommonProcessState
-static NuGet.Common.NuGetCommonProcessState.ResetEnvironmentCaches() -> void
+NuGet.Common.NuGetProcessState
+const NuGet.Common.NuGetProcessState.EndRestore = "EndRestore" -> string!
+const NuGet.Common.NuGetProcessState.StartBuild = "StartBuild" -> string!
+static NuGet.Common.NuGetProcessState.RegisterResetAction(string! key, System.Action! resetAction) -> void
+static NuGet.Common.NuGetProcessState.Reset(string! key) -> void

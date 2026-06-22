@@ -30,6 +30,11 @@ namespace NuGet.Common
 
         internal static IEnvironmentVariableReader EnvironmentVariableReader { get; set; } = EnvironmentVariableWrapper.Instance;
 
+        static ConcurrencyUtilities()
+        {
+            NuGetProcessState.RegisterResetAction(NuGetProcessState.StartBuild, ResetEnvironmentCaches);
+        }
+
         /// <summary>
         /// Clears the environment-derived caches (the delete-on-close opt-in and the lock-file base path) so they
         /// are re-read from the current environment on next use. The base path also derives from the NuGet temp
