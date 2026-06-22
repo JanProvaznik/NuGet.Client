@@ -177,19 +177,6 @@ Copyright (c) .NET Foundation. All rights reserved.
   <UsingTask TaskName="NuGet.Build.Tasks.NuGetMessageTask" AssemblyFile="$(RestoreTaskAssemblyFile)" />
   <UsingTask TaskName="NuGet.Build.Tasks.CheckForDuplicateNuGetItemsTask" AssemblyFile="$(RestoreTaskAssemblyFile)" />
   <UsingTask TaskName="NuGet.Build.Tasks.GetGlobalPropertyValueTask" AssemblyFile="$(RestoreTaskAssemblyFile)" />
-  <UsingTask TaskName="NuGet.Build.Tasks.ResetNuGetProcessStateTask" AssemblyFile="$(RestoreTaskAssemblyFile)" />
-
-  <!--
-    ============================================================
-    _NuGetResetProcessState
-    Resets NuGet's environment-derived process caches at the very start of restore (the first NuGet task in the
-    restore target chain) so a reused host (MSBuild Server / multithreaded MSBuild) re-reads the current
-    environment for this restore. Opt-in and off by default; classic single-shot builds are unaffected.
-    ============================================================
-  -->
-  <Target Name="_NuGetResetProcessState" Condition="'$(RestoreResetProcessState)' == 'true'">
-    <ResetNuGetProcessStateTask Key="StartBuild" />
-  </Target>
 
   <!--
     ============================================================
@@ -197,7 +184,7 @@ Copyright (c) .NET Foundation. All rights reserved.
     Main entry point for restoring packages
     ============================================================
   -->
-  <Target Name="Restore" DependsOnTargets="_NuGetResetProcessState;_GenerateRestoreGraph">
+  <Target Name="Restore" DependsOnTargets="_GenerateRestoreGraph">
 
     <!-- Drop any duplicate items -->
     <RemoveDuplicates
@@ -226,9 +213,6 @@ Copyright (c) .NET Foundation. All rights reserved.
       <Output TaskParameter="ProjectsAlreadyUpToDate" PropertyName="RestoreSkippedCount" />
       <Output TaskParameter="ProjectsAudited" PropertyName="RestoreProjectsAuditedCount" />
     </RestoreTask>
-
-    <!-- Tear down plugin processes at the end of restore so they do not outlive this build. -->
-    <ResetNuGetProcessStateTask Key="EndRestore" Condition="'$(RestoreResetProcessState)' == 'true'" />
   </Target>
 
   <!--

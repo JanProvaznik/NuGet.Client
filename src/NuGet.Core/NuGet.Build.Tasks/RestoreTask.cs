@@ -145,6 +145,15 @@ namespace NuGet.Build.Tasks
 
             NuGet.Common.Migrations.MigrationRunner.Run();
 
+            // In a host that reuses the process across builds (opt-in), re-read environment-derived caches at the
+            // start of this restore so it observes the current environment, and tear down plugin processes at the
+            // end so they do not outlive the build (as they would have when the process exited per build).
+            bool resetProcessState = ShouldResetProcessState();
+            if (resetProcessState)
+            {
+                NuGet.Common.NuGetProcessState.Reset(NuGet.Common.NuGetProcessState.StartBuild);
+            }
+
             try
             {
                 return ExecuteAsync(log).Result;
@@ -160,6 +169,20 @@ namespace NuGet.Build.Tasks
                 ExceptionUtilities.LogException(e, log);
                 return false;
             }
+            finally
+            {
+                if (resetProcessState)
+                {
+                    NuGet.Common.NuGetProcessState.Reset(NuGet.Common.NuGetProcessState.EndRestore);
+                }
+            }
+        }
+
+        private bool ShouldResetProcessState()
+        {
+            string value = _environmentVariableReader.GetEnvironmentVariable("NUGET_RESTORE_RESET_PROCESS_STATE");
+            return !string.IsNullOrEmpty(value) &&
+                (value.Equals(bool.TrueString, StringComparison.OrdinalIgnoreCase) || value == "1");
         }
 
         private async Task<bool> ExecuteAsync(Common.ILogger log)
