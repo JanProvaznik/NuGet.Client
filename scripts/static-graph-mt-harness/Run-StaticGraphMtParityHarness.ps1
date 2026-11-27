@@ -39,6 +39,8 @@ param(
 
     [string[]]$RealSolutions = @(),
 
+    [string[]]$RestoreSolutions = @(),
+
     [switch]$SkipSynthetic,
 
     [switch]$SkipRealSolutions,
@@ -1034,6 +1036,67 @@ if (-not $SkipRealSolutions -and $RealSolutions.Count -gt 0) {
         $ok = $exitParity -and $jsonOk -and $leaksOk
         $speedup = if ($rSt.EvalMs -gt 0 -and $rMt.EvalMs -gt 0) { [math]::Round($rSt.EvalMs / [double]$rMt.EvalMs, 2) } else { 0 }
         Record-Result "RealSolution" $label $ok "ec=$($rSt.ExitCode)/$($rMt.ExitCode) projs=$($rMt.ProjCount) eval=$($rSt.EvalMs)ms->$($rMt.EvalMs)ms (${speedup}x) dgspec=$jsonStatus th=$thBefore->$thAfter"
+    }
+}
+
+# ==============================================================================
+# PART C: REAL `dotnet restore /p:RestoreUseStaticGraphEvaluation=true -mt` ASSETS PARITY
+# ==============================================================================
+if (-not $SkipRealSolutions -and $RestoreSolutions.Count -gt 0) {
+    Write-Host "`n=== PART C: Real `dotnet restore /p:RestoreUseStaticGraphEvaluation=true -mt` Byte-for-Byte project.assets.json Parity ($($RestoreSolutions.Count) solutions) ===" -ForegroundColor Cyan
+
+    foreach ($slnFullPath in $RestoreSolutions) {
+        if (-not (Test-Path $slnFullPath)) {
+            Record-Result "RealRestore" $slnFullPath $false "Solution path not found"
+            continue
+        }
+        $slnDir = Split-Path -Parent $slnFullPath
+        $slnFile = Split-Path -Leaf $slnFullPath
+        $repoName = Split-Path -Leaf $slnDir
+        $label = "$repoName/$slnFile"
+
+        # Detect whether `dotnet` resolves to our staged SDK or gets hijacked by a repo-local global.json `.dotnet` path.
+        Push-Location $slnDir
+        $resolvedBase = (& $dotnetExe --info 2>&1 | Select-String -Pattern "Base Path:" | ForEach-Object { $_.Line.Trim() }) -join ""
+        Pop-Location
+        $useDotnetRestore = $resolvedBase -like "*$StagedSdkRoot*"
+
+        $thBefore = Get-TaskHostCount
+        $stAssets = @{}
+        $mtAssets = @{}
+
+        Push-Location $slnDir
+        if ($useDotnetRestore) {
+            & $dotnetExe restore $slnFile /p:RestoreUseStaticGraphEvaluation=true /p:RestoreStaticGraphEnableMultiThreaded=false /p:NuGetAudit=false --force -mt -v:minimal /nologo | Out-Null
+            $ecSt = $LASTEXITCODE
+        } else {
+            & $dotnetExe $msbuildDll $slnFile /t:Restore /p:RestoreUseStaticGraphEvaluation=true /p:RestoreStaticGraphEnableMultiThreaded=false /p:RestoreForce=true /p:NuGetAudit=false -mt -v:minimal /nologo | Out-Null
+            $ecSt = $LASTEXITCODE
+        }
+        Get-ChildItem $slnDir -Recurse -Filter "project.assets.json" -ErrorAction SilentlyContinue | ForEach-Object {
+            $stAssets[$_.FullName] = (Get-FileHash $_.FullName -Algorithm SHA256).Hash
+        }
+
+        if ($useDotnetRestore) {
+            & $dotnetExe restore $slnFile /p:RestoreUseStaticGraphEvaluation=true /p:NuGetAudit=false --force -mt -v:minimal /nologo | Out-Null
+            $ecMt = $LASTEXITCODE
+        } else {
+            & $dotnetExe $msbuildDll $slnFile /t:Restore /p:RestoreUseStaticGraphEvaluation=true /p:RestoreForce=true /p:NuGetAudit=false -mt -v:minimal /nologo | Out-Null
+            $ecMt = $LASTEXITCODE
+        }
+        Get-ChildItem $slnDir -Recurse -Filter "project.assets.json" -ErrorAction SilentlyContinue | ForEach-Object {
+            $mtAssets[$_.FullName] = (Get-FileHash $_.FullName -Algorithm SHA256).Hash
+        }
+        Pop-Location
+
+        $thAfter = Get-TaskHostCount
+        $diffs = 0
+        foreach ($k in ($stAssets.Keys + $mtAssets.Keys | Sort-Object -Unique)) {
+            if ($stAssets[$k] -ne $mtAssets[$k]) { $diffs++ }
+        }
+        $via = if ($useDotnetRestore) { "dotnet-restore" } else { "msbuild-t-Restore(global.json-local-sdk)" }
+        $ok = ($ecSt -eq 0) -and ($ecMt -eq 0) -and ($mtAssets.Count -gt 0) -and ($diffs -eq 0) -and ($thAfter -le $thBefore)
+        Record-Result "RealRestore" $label $ok "via=$via ec=$ecSt/$ecMt assets=$($mtAssets.Count) sha256Diffs=$diffs th=$thBefore->$thAfter"
     }
 }
 

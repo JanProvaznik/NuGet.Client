@@ -5,7 +5,8 @@
 .DESCRIPTION
     Measures LoadProjects ("Evaluated N project(s) in Xms") and end-to-end wall time
     with alternating AB / BA round order to eliminate drift and thermal bias.
-    Verifies normalized dgspec.json equivalence for each benchmarked solution.
+    Supports both real `dotnet restore /p:RestoreUseStaticGraphEvaluation=true -mt` (default)
+    and `GenerateRestoreGraphFile` mode (offline, non-mutating dgspec generation).
 #>
 [CmdletBinding()]
 param(
@@ -17,7 +18,10 @@ param(
     [Parameter(Mandatory = $true)]
     [string[]]$Solutions,
 
-    [int]$Rounds = 8,
+    [ValidateSet("Restore", "GenerateRestoreGraphFile")]
+    [string]$Mode = "Restore",
+
+    [int]$Rounds = 6,
 
     [string]$WorkDir = ""
 )
@@ -69,21 +73,36 @@ foreach ($slnPath in $Solutions) {
 
     Push-Location $slnDir
     try {
+        # Check whether `dotnet` resolves to the staged SDK or a repo-local `.dotnet` path in global.json.
+        $resolvedBase = (& $dotnetExe --info 2>&1 | Select-String -Pattern "Base Path:" | ForEach-Object { $_.Line.Trim() }) -join ""
+        $useDotnetCli = ($Mode -eq "Restore") -and ($resolvedBase -like "*$StagedSdkRoot*")
+
+        function Invoke-Once([string]$en) {
+            if ($Mode -eq "Restore") {
+                if ($useDotnetCli) {
+                    return & $dotnetExe restore $slnFile /p:RestoreUseStaticGraphEvaluation=true "/p:RestoreStaticGraphEnableMultiThreaded=$en" /p:NuGetAudit=false -mt -v:normal /nologo 2>&1
+                } else {
+                    return & $dotnetExe $msbuildDll $slnFile /t:Restore /p:RestoreUseStaticGraphEvaluation=true "/p:RestoreStaticGraphEnableMultiThreaded=$en" /p:NuGetAudit=false -mt -v:normal /nologo 2>&1
+                }
+            } else {
+                $dg = Join-Path $WorkDir "$safe-$en.dgspec.json"
+                return & $dotnetExe $msbuildDll $slnFile /t:GenerateRestoreGraphFile /p:RestoreUseStaticGraphEvaluation=true "/p:RestoreStaticGraphEnableMultiThreaded=$en" "/p:RestoreGraphOutputPath=$dg" /mt /nologo /v:normal 2>&1
+            }
+        }
+
         # Warm-up (1 ST + 1 MT)
         foreach ($en in @("false", "true")) {
-            $dg = Join-Path $WorkDir "$safe-$en.dgspec.json"
-            & $dotnetExe $msbuildDll $slnFile /t:GenerateRestoreGraphFile /p:RestoreUseStaticGraphEvaluation=true "/p:RestoreStaticGraphEnableMultiThreaded=$en" "/p:RestoreGraphOutputPath=$dg" /mt /nologo /v:normal | Out-Null
-            if ($LASTEXITCODE -ne 0) { throw "Warmup failed for $label (mt=$en, ec=$LASTEXITCODE)" }
+            $null = Invoke-Once $en
+            if ($LASTEXITCODE -ne 0) { throw "Warmup failed for $label (mode=$Mode mt=$en ec=$LASTEXITCODE)" }
         }
 
         for ($r = 1; $r -le $Rounds; $r++) {
             $order = if ($r % 2 -eq 1) { @("false", "true") } else { @("true", "false") }
             foreach ($en in $order) {
-                $dg = Join-Path $WorkDir "$safe-$en.dgspec.json"
                 $sw = [Diagnostics.Stopwatch]::StartNew()
-                $out = & $dotnetExe $msbuildDll $slnFile /t:GenerateRestoreGraphFile /p:RestoreUseStaticGraphEvaluation=true "/p:RestoreStaticGraphEnableMultiThreaded=$en" "/p:RestoreGraphOutputPath=$dg" /mt /nologo /v:normal 2>&1
+                $out = Invoke-Once $en
                 $sw.Stop()
-                if ($LASTEXITCODE -ne 0) { throw "Benchmark run failed for $label (round=$r mt=$en ec=$LASTEXITCODE)" }
+                if ($LASTEXITCODE -ne 0) { throw "Benchmark run failed for $label (mode=$Mode round=$r mt=$en ec=$LASTEXITCODE)" }
                 $m = [regex]::Match(($out -join "`n"), "Evaluated (\d+) project\(s\) in (\d+)ms \((\d+) builds, (\d+) failures\)")
                 if (-not $m.Success) { throw "Could not parse evaluation summary for $label" }
                 $builds = [int]$m.Groups[3].Value
